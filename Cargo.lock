@@ -598,7 +598,7 @@ dependencies = [
 
 [[package]]
 name = "companion-app"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "companion-discovery",
  "companion-dsm",
@@ -613,7 +613,7 @@ dependencies = [
 
 [[package]]
 name = "companion-discovery"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "mdns-sd",
  "serde",
@@ -622,7 +622,7 @@ dependencies = [
 
 [[package]]
 name = "companion-dsm"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "rcgen",
  "reqwest",

@@ -21,7 +21,6 @@ Jede Version ist für sich nutzbar. Funktionen, die das NAS über DSMs eigene Ei
 - [x] Felder der Übersicht an einem Virtual DSM 7.4.1 prüfen und seine Antworten als Testdaten aufzeichnen (Laufwerke und Temperatur brauchen echte Hardware)
 - [x] CI: Prüfungen unter Linux, macOS und Windows; Lizenz- und Sicherheitsprüfung
 - [x] Release-Builds für Linux x86_64 und arm64 (deb, rpm, AppImage), macOS universell (dmg) und Windows (msi, exe) ([Releases](docs/releasing.de.md))
-- [ ] Nachgebauter DSM-Server mit aufgezeichneten Antworten für automatische Tests
 
 ## v0.2 – Steuern
 
@@ -30,6 +29,7 @@ Jede Version ist für sich nutzbar. Funktionen, die das NAS über DSMs eigene Ei
 - [ ] Freigaben (SMB) im Dateimanager des jeweiligen Systems einbinden
 - [ ] Verfügbare DSM- und Paket-Updates
 - [ ] Mehrere NAS nebeneinander
+- [ ] Eigenständiger nachgebauter DSM-Server aus den aufgezeichneten Antworten, um die App ohne NAS auszuprobieren (die automatischen Tests nutzen sie schon)
 
 ## v0.3 – SSH
 

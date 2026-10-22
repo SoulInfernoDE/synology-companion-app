@@ -21,7 +21,6 @@ Each version is usable on its own. Features that change the NAS beyond DSM's own
 - [x] Check the dashboard fields against a Virtual DSM 7.4.1 and record its answers as test fixtures (drives and temperature need real hardware)
 - [x] CI: checks on Linux, macOS and Windows; licence and advisory checks
 - [x] Release builds for Linux x86_64 and arm64 (deb, rpm, AppImage), macOS universal (dmg) and Windows (msi, exe) ([releasing](docs/releasing.md))
-- [ ] Mock DSM server with recorded responses for automated tests
 
 ## v0.2 – Control
 
@@ -30,6 +29,7 @@ Each version is usable on its own. Features that change the NAS beyond DSM's own
 - [ ] Mount shared folders (SMB) in the file manager of each system
 - [ ] Available DSM and package updates
 - [ ] Several NAS side by side
+- [ ] Standalone mock DSM server from the recorded answers, to try the app without a NAS (the automated tests already use them)
 
 ## v0.3 – SSH
 
