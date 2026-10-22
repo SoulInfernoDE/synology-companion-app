@@ -10,13 +10,13 @@ Each version is usable on its own. Features that change the NAS beyond DSM's own
 - [x] Skins for Linux, macOS and Windows, light and dark, automatic or chosen by hand
 - [x] Demo mode with sample data (UI development without a NAS, screenshots)
 - [x] Find NAS on the local network (mDNS/Bonjour)
-- [ ] Find NAS without Bonjour, the way Synology Assistant does (UDP broadcast)
+- [x] Find NAS without Bonjour, the way Synology Assistant does (UDP broadcast)
 - [x] Sign in through the DSM Web API, with 2FA and "remember this device"
 - [x] Self-signed DSM certificates: show the fingerprint, pin it once trusted, warn when it changes
 - [x] Credentials in the system keychain (Secret Service, macOS Keychain, Windows Credential Manager)
 - [x] Saved NAS: connect again with one click, remove from the list
 - [x] First-time setup of a NAS whose DSM welcome wizard has not run: own administrator account, built-in `admin` locked, device name, time zone, updates; usage statistics off
-- [ ] Try the first-time setup on the Virtual DSM 7.4.1 (snapshot before, roll back after)
+- [x] First-time setup tested on a Virtual DSM 7.4.1
 - [x] Dashboard: system, utilisation, volumes, drives
 - [x] Check the dashboard fields against a Virtual DSM 7.4.1 and record its answers as test fixtures (drives and temperature need real hardware)
 - [x] CI: checks on Linux, macOS and Windows; licence and advisory checks

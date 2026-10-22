@@ -2,12 +2,15 @@
 //!
 //! DSM announces its web interface as `_http._tcp` with TXT records such as
 //! `vendor=Synology`, `model=DS923+`, `version_major=7` and `secure_admin_port=5001`
-//! (Control Panel › File Services › Advanced › Bonjour).
+//! (Control Panel › File Services › Advanced › Bonjour). NAS without Bonjour are
+//! found with Synology Assistant's own protocol (see `findhost`).
 
 use std::net::Ipv4Addr;
 use std::time::{Duration, Instant};
 
 use mdns_sd::{ServiceDaemon, ServiceEvent};
+
+mod findhost;
 use serde::Serialize;
 
 const SERVICE: &str = "_http._tcp.local.";
@@ -62,8 +65,8 @@ fn from_record<'a>(
     })
 }
 
-/// Listens for `duration` and returns every Synology NAS that answered, by name.
-pub fn browse(duration: Duration) -> Result<Vec<FoundNas>, String> {
+/// NAS that answered on Bonjour within `duration`.
+fn browse_mdns(duration: Duration) -> Result<Vec<FoundNas>, String> {
     let daemon = ServiceDaemon::new().map_err(|error| error.to_string())?;
     let events = daemon.browse(SERVICE).map_err(|error| error.to_string())?;
     let deadline = Instant::now() + duration;
@@ -85,6 +88,59 @@ pub fn browse(duration: Duration) -> Result<Vec<FoundNas>, String> {
         }
     }
     let _ = daemon.shutdown();
+    Ok(found)
+}
+
+/// Adds the NAS that answered Synology Assistant's query and completes the ones
+/// Bonjour already found.
+fn merge(found: &mut Vec<FoundNas>, answers: Vec<findhost::Answer>) {
+    for answer in answers {
+        let Some(ip) = answer.ip else { continue };
+        let host = ip.to_string();
+        if let Some(known) = found.iter_mut().find(|known| known.host == host) {
+            if known.model.is_empty() {
+                known.model = answer.model.unwrap_or_default();
+            }
+            // findhostd knows the full version ("7.4.1"), Bonjour only "7.4".
+            if answer.dsm_version.is_some() {
+                known.dsm = answer.dsm_version;
+            }
+            continue;
+        }
+        found.push(FoundNas {
+            name: answer.hostname.unwrap_or_else(|| host.clone()),
+            model: answer.model.unwrap_or_default(),
+            port: answer.https_port.unwrap_or(DEFAULT_HTTPS_PORT),
+            dsm: answer.dsm_version,
+            host,
+        });
+    }
+}
+
+/// Searches with Bonjour and with Synology Assistant's protocol at the same time
+/// and returns every NAS that answered within `duration`, by name. Fails only
+/// when neither search could run.
+pub fn browse(duration: Duration) -> Result<Vec<FoundNas>, String> {
+    let assistant = std::thread::spawn(move || findhost::search(duration));
+    let bonjour = browse_mdns(duration);
+    let assistant = assistant
+        .join()
+        .map_err(|_| "the search stopped unexpectedly".to_owned())
+        .and_then(|result| result.map_err(|error| error.to_string()));
+
+    let mut found = match (bonjour, assistant) {
+        (Err(bonjour), Err(assistant)) => return Err(format!("{bonjour}; {assistant}")),
+        (Ok(found), Err(_)) => found,
+        (Err(_), Ok(answers)) => {
+            let mut found = Vec::new();
+            merge(&mut found, answers);
+            found
+        }
+        (Ok(mut found), Ok(answers)) => {
+            merge(&mut found, answers);
+            found
+        }
+    };
     found.sort_by_key(|nas| nas.name.to_lowercase());
     Ok(found)
 }
@@ -128,6 +184,39 @@ mod tests {
                 dsm: Some("7.3".into()),
             }
         );
+    }
+
+    #[test]
+    fn assistant_answers_add_and_complete_nas() {
+        let mut found = vec![FoundNas {
+            name: "nas-home".into(),
+            model: String::new(),
+            host: "192.168.1.20".into(),
+            port: 5001,
+            dsm: Some("7.4".into()),
+        }];
+        merge(
+            &mut found,
+            vec![
+                findhost::Answer {
+                    ip: Some(Ipv4Addr::new(192, 168, 1, 20)),
+                    model: Some("DS923+".into()),
+                    dsm_version: Some("7.4.1".into()),
+                    ..Default::default()
+                },
+                findhost::Answer {
+                    hostname: Some("vdsm".into()),
+                    ip: Some(Ipv4Addr::new(192, 168, 1, 42)),
+                    model: Some("VirtualDSM".into()),
+                    https_port: Some(5551),
+                    ..Default::default()
+                },
+            ],
+        );
+        assert_eq!(found[0].model, "DS923+");
+        assert_eq!(found[0].dsm.as_deref(), Some("7.4.1"));
+        assert_eq!(found[1].name, "vdsm");
+        assert_eq!(found[1].port, 5551);
     }
 
     #[test]

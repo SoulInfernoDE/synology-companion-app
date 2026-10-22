@@ -617,6 +617,7 @@ version = "0.0.0"
 dependencies = [
  "mdns-sd",
  "serde",
+ "socket2",
 ]
 
 [[package]]

@@ -21,7 +21,7 @@ It is made for **regular users without shell experience**. Everything that touch
 
 **Everyday (no expert mode needed)**
 
-- **Find and connect:** NAS on the local network are found automatically; sign in with two-factor authentication, remember the device, several NAS side by side. Credentials go to the system keychain.
+- **Find and connect:** NAS on the local network are found automatically, through Bonjour and Synology Assistant's own search; sign in with two-factor authentication, remember the device, several NAS side by side. Credentials go to the system keychain.
 - **First-time setup:** a new NAS whose DSM welcome wizard has not run is set up from the app: your own administrator account, the built-in `admin` account locked, device name, time zone and updates; usage statistics stay off. Until then, DSM lets anyone on the network manage the NAS, so the app warns about it.
 - **Dashboard:** CPU, memory, network, volumes and their usage, drive health and temperature, uptime, available DSM and package updates.
 - **Tray and notifications:** degraded volume, failed backup, drive warnings, new updates.

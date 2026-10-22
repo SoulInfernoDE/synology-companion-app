@@ -21,7 +21,7 @@ Sie ist für **normale Benutzer ohne Shell-Erfahrung** gedacht. Alles, was über
 
 **Alltag (ohne Expertenmodus)**
 
-- **Finden und verbinden:** NAS im lokalen Netz werden automatisch gefunden; Anmeldung mit Zwei-Faktor-Anmeldung, Gerät merken, mehrere NAS nebeneinander. Zugangsdaten landen im Schlüsselbund des Systems.
+- **Finden und verbinden:** NAS im lokalen Netz werden automatisch gefunden, über Bonjour und die Suche des Synology Assistant; Anmeldung mit Zwei-Faktor-Anmeldung, Gerät merken, mehrere NAS nebeneinander. Zugangsdaten landen im Schlüsselbund des Systems.
 - **Ersteinrichtung:** Ein neues NAS, dessen DSM-Willkommensassistent noch nicht gelaufen ist, wird aus der App eingerichtet: eigenes Administratorkonto, eingebautes Konto `admin` gesperrt, Gerätename, Zeitzone und Updates; Nutzungsstatistiken bleiben aus. Bis dahin darf jeder im Netzwerk das NAS verwalten, deshalb warnt die App davor.
 - **Übersicht:** CPU, Arbeitsspeicher, Netzwerk, Volumes und ihre Belegung, Zustand und Temperatur der Festplatten, Laufzeit, verfügbare DSM- und Paket-Updates.
 - **Tray und Benachrichtigungen:** herabgestuftes Volume, fehlgeschlagene Sicherung, Festplattenwarnungen, neue Updates.

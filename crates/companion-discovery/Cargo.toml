@@ -11,6 +11,7 @@ publish = false
 
 [dependencies]
 mdns-sd = "0.21"
+socket2 = { version = "0.6", features = ["all"] }
 serde.workspace = true
 
 [lints]

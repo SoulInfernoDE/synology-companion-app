@@ -10,13 +10,13 @@ Jede Version ist für sich nutzbar. Funktionen, die das NAS über DSMs eigene Ei
 - [x] Skins für Linux, macOS und Windows, hell und dunkel, automatisch oder von Hand gewählt
 - [x] Demomodus mit Beispieldaten (UI-Entwicklung ohne NAS, Screenshots)
 - [x] NAS im lokalen Netz finden (mDNS/Bonjour)
-- [ ] NAS ohne Bonjour finden, so wie Synology Assistant (UDP-Broadcast)
+- [x] NAS ohne Bonjour finden, so wie Synology Assistant (UDP-Broadcast)
 - [x] Anmeldung über die DSM-Web-API, mit 2FA und „Gerät merken“
 - [x] Selbstsignierte DSM-Zertifikate: Fingerabdruck zeigen, nach dem Vertrauen festhalten, bei Änderung warnen
 - [x] Zugangsdaten im Schlüsselbund (Secret Service, macOS-Schlüsselbund, Windows-Anmeldeinformationsverwaltung)
 - [x] Gespeicherte NAS: mit einem Klick wieder verbinden, aus der Liste entfernen
 - [x] Ersteinrichtung eines NAS, dessen DSM-Willkommensassistent noch nicht gelaufen ist: eigenes Administratorkonto, eingebautes `admin` gesperrt, Gerätename, Zeitzone, Updates; Nutzungsstatistiken aus
-- [ ] Ersteinrichtung am Virtual DSM 7.4.1 ausprobieren (vorher Snapshot, danach zurückrollen)
+- [x] Ersteinrichtung an einem Virtual DSM 7.4.1 getestet
 - [x] Übersicht: System, Auslastung, Volumes, Laufwerke
 - [x] Felder der Übersicht an einem Virtual DSM 7.4.1 prüfen und seine Antworten als Testdaten aufzeichnen (Laufwerke und Temperatur brauchen echte Hardware)
 - [x] CI: Prüfungen unter Linux, macOS und Windows; Lizenz- und Sicherheitsprüfung

@@ -9,7 +9,7 @@
 │  UI: Svelte 5 in the system WebView, skins, Fluent translations  │
 │        │ Tauri commands / events                                 │
 │  Core (Rust)                                                     │
-│   ├─ discovery    mDNS/Bonjour, Wake-on-LAN                      │
+│   ├─ discovery    mDNS/Bonjour, Synology Assistant, Wake-on-LAN │
 │   ├─ dsm          DSM Web API client (HTTPS, session, 2FA)       │
 │   ├─ ssh          keys, host key pinning, sudo via keychain      │
 │   ├─ recipes      manifest, plan, backup, apply, verify, restore │
@@ -28,17 +28,26 @@
 
 ## Repository layout
 
-| Path                         | Contents                                                 |
-| ---------------------------- | -------------------------------------------------------- |
-| `crates/companion-app`       | Tauri app: windows, tray, commands                       |
-| `crates/companion-dsm`       | DSM Web API client with certificate pinning              |
-| `crates/companion-discovery` | Finds NAS on the local network (mDNS/Bonjour)            |
-| `crates/companion-ssh`       | SSH, keys, sudo _(planned)_                              |
-| `crates/companion-recipes`   | Recipe engine and journal _(planned)_                    |
-| `ui/`                        | User interface (Svelte 5, TypeScript, Vite)              |
-| `locales/`                   | Fluent catalogs, shared by Rust and UI (`en` base, `de`) |
-| `recipes/`                   | Recipe manifests _(planned)_                             |
-| `assets/branding/`           | Icon and logos                                           |
+| Path                         | Contents                                                     |
+| ---------------------------- | ------------------------------------------------------------ |
+| `crates/companion-app`       | Tauri app: windows, tray, commands                           |
+| `crates/companion-dsm`       | DSM Web API client with certificate pinning                  |
+| `crates/companion-discovery` | Finds NAS on the local network (Bonjour, Synology Assistant) |
+| `crates/companion-ssh`       | SSH, keys, sudo _(planned)_                                  |
+| `crates/companion-recipes`   | Recipe engine and journal _(planned)_                        |
+| `ui/`                        | User interface (Svelte 5, TypeScript, Vite)                  |
+| `locales/`                   | Fluent catalogs, shared by Rust and UI (`en` base, `de`)     |
+| `recipes/`                   | Recipe manifests _(planned)_                                 |
+| `assets/branding/`           | Icon and logos                                               |
+
+## Finding NAS
+
+Two searches run at the same time for three seconds:
+
+- **Bonjour/mDNS:** DSM announces `_http._tcp` with `vendor=Synology`, model, DSM version and HTTPS port, if Bonjour is on in DSM.
+- **Synology Assistant's protocol:** a query broadcast to UDP port 9999, answered by DSM's `findhostd` with host name, IP address, model, DSM version and ports, whether Bonjour is on or not. A packet is the magic `12 34 56 78 'SYNO'` followed by records of one byte ID, one byte length and the value. The layout follows public analyses of `findhostd` and [syno_discover.py](https://github.com/007revad/Syno_Toolbox) by 007revad (MIT). The query names a locally administered sender MAC, because findhostd ignores queries from Synology's own MAC prefixes; it is new for every query and the query is sent three times, because findhostd stays silent for a while towards a sender it has just answered and UDP may lose packets. The serial number in the answers is not kept.
+
+Answers are merged by IP address. On Linux and Windows a firewall may need to let UDP port 9999 in; on macOS the system asks once for access to the local network.
 
 ## Signing in
 

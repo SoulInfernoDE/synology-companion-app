@@ -9,7 +9,7 @@
 │  UI: Svelte 5 im System-WebView, Skins, Fluent-Übersetzungen     │
 │        │ Tauri-Befehle / Ereignisse                              │
 │  Kern (Rust)                                                     │
-│   ├─ discovery    mDNS/Bonjour, Wake-on-LAN                      │
+│   ├─ discovery    mDNS/Bonjour, Synology Assistant, Wake-on-LAN │
 │   ├─ dsm          Client für die DSM-Web-API (HTTPS, Sitzung, 2FA)│
 │   ├─ ssh          Schlüssel, Host-Schlüssel, sudo über Schlüsselbund │
 │   ├─ recipes      Manifest, Plan, Sicherung, Anwenden, Prüfen, Rückgängig │
@@ -32,13 +32,22 @@
 | ---------------------------- | --------------------------------------------------------------------- |
 | `crates/companion-app`       | Tauri-App: Fenster, Tray, Befehle                                     |
 | `crates/companion-dsm`       | Client für die DSM-Web-API mit Zertifikats-Pinning                    |
-| `crates/companion-discovery` | Findet NAS im lokalen Netz (mDNS/Bonjour)                             |
+| `crates/companion-discovery` | Findet NAS im lokalen Netz (Bonjour, Synology Assistant)              |
 | `crates/companion-ssh`       | SSH, Schlüssel, sudo _(geplant)_                                      |
 | `crates/companion-recipes`   | Rezept-Engine und Protokoll _(geplant)_                               |
 | `ui/`                        | Oberfläche (Svelte 5, TypeScript, Vite)                               |
 | `locales/`                   | Fluent-Kataloge, von Rust und UI gemeinsam genutzt (`en` Basis, `de`) |
 | `recipes/`                   | Rezept-Manifeste _(geplant)_                                          |
 | `assets/branding/`           | Icon und Logos                                                        |
+
+## NAS finden
+
+Zwei Suchen laufen gleichzeitig drei Sekunden lang:
+
+- **Bonjour/mDNS:** DSM meldet `_http._tcp` mit `vendor=Synology`, Modell, DSM-Version und HTTPS-Port, wenn Bonjour in DSM eingeschaltet ist.
+- **Protokoll des Synology Assistant:** eine Anfrage per Broadcast an UDP-Port 9999, die DSMs `findhostd` mit Hostname, IP-Adresse, Modell, DSM-Version und Ports beantwortet, ob Bonjour an ist oder nicht. Ein Paket besteht aus der Kennung `12 34 56 78 'SYNO'` und Einträgen aus einem Byte ID, einem Byte Länge und dem Wert. Der Aufbau folgt öffentlichen Analysen von `findhostd` und [syno_discover.py](https://github.com/007revad/Syno_Toolbox) von 007revad (MIT). Die Anfrage nennt eine lokal verwaltete Absender-MAC, weil findhostd Anfragen von Synologys eigenen MAC-Präfixen ignoriert; sie ist bei jeder Anfrage neu, und die Anfrage geht dreimal hinaus, weil findhostd einem Absender, dem es gerade geantwortet hat, eine Weile nicht antwortet und UDP Pakete verlieren kann. Die Seriennummer in den Antworten wird nicht gespeichert.
+
+Die Antworten werden über die IP-Adresse zusammengeführt. Unter Linux und Windows muss eine Firewall eventuell UDP-Port 9999 hereinlassen; unter macOS fragt das System einmal nach dem Zugriff auf das lokale Netzwerk.
 
 ## Anmeldung
 
