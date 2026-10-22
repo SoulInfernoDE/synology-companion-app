@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Syno Companion app icon: a two-bay NAS with a companion orbiting it. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#16325c"/>
+      <stop offset="1" stop-color="#0f8f8a"/>
+    </linearGradient>
+    <linearGradient id="chassis" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#dfe8f1"/>
+    </linearGradient>
+    <linearGradient id="bay" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#21426b"/>
+      <stop offset="1" stop-color="#16325c"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- Orbit, back half (hidden behind the chassis) -->
+  <ellipse cx="256" cy="286" rx="216" ry="70" transform="rotate(-18 256 286)"
+           fill="none" stroke="#ffffff" stroke-opacity="0.35" stroke-width="12"/>
+
+  <!-- Chassis -->
+  <rect x="156" y="128" width="200" height="262" rx="30" fill="url(#chassis)"/>
+
+  <!-- Drive bays -->
+  <rect x="180" y="158" width="70" height="160" rx="12" fill="url(#bay)"/>
+  <rect x="262" y="158" width="70" height="160" rx="12" fill="url(#bay)"/>
+  <rect x="200" y="290" width="30" height="8" rx="4" fill="#5fd3c6"/>
+  <rect x="282" y="290" width="30" height="8" rx="4" fill="#5fd3c6"/>
+
+  <!-- Status LEDs -->
+  <circle cx="196" cy="342" r="9" fill="#2ec4a6"/>
+  <circle cx="226" cy="342" r="9" fill="#2ec4a6"/>
+
+  <!-- Orbit, front half -->
+  <path d="M 50.6 352.8 A 216 70 -18 0 0 456 246"
+        fill="none" stroke="#ffffff" stroke-width="12" stroke-linecap="round"/>
+
+  <!-- Companion -->
+  <circle cx="456" cy="246" r="26" fill="#ffffff"/>
+  <circle cx="456" cy="246" r="17" fill="#f6b73c"/>
+</svg>

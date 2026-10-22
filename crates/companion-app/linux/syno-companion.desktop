@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Name={{name}}
+GenericName=NAS Companion
+GenericName[de]=NAS-Begleiter
+Comment={{comment}}
+Comment[de]=Desktop-Begleiter für Synology-NAS
+Exec={{exec}}
+Icon={{icon}}
+Terminal=false
+Categories={{categories}}
+Keywords=Synology;NAS;DSM;Storage;
+Keywords[de]=Synology;NAS;DSM;Speicher;
+StartupWMClass=syno-companion

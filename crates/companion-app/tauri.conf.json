@@ -1,0 +1,59 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Syno Companion",
+  "mainBinaryName": "syno-companion",
+  "identifier": "io.github.soulinfernode.synocompanion",
+  "build": {
+    "devUrl": "http://localhost:5174",
+    "frontendDist": "../../ui/dist",
+    "beforeDevCommand": {
+      "script": "npm run dev -w ui -- --port 5174 --strictPort",
+      "cwd": "../.."
+    },
+    "beforeBuildCommand": {
+      "script": "npm run build -w ui",
+      "cwd": "../.."
+    }
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Syno Companion",
+        "width": 1120,
+        "height": 760,
+        "minWidth": 640,
+        "minHeight": 480,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' ipc: http://ipc.localhost",
+      "devCsp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ipc: http://ipc.localhost ws://localhost:5174"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["deb", "rpm", "appimage", "dmg", "msi", "nsis"],
+    "category": "Utility",
+    "shortDescription": "Desktop companion for Synology NAS",
+    "longDescription": "Status, shared folders, SSH setup and community extensions for Synology NAS on Linux, macOS and Windows. Independent community project, not affiliated with Synology Inc.",
+    "license": "GPL-3.0-or-later",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "linux": {
+      "deb": {
+        "desktopTemplate": "linux/syno-companion.desktop"
+      },
+      "rpm": {
+        "desktopTemplate": "linux/syno-companion.desktop"
+      }
+    }
+  }
+}
