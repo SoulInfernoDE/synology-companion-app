@@ -48,6 +48,17 @@
 4. **Schlüsselbund.** Das Geräte-Token und, nur auf Wunsch, das Passwort liegen im Schlüsselbund des Systems unter „Syno Companion“, ein Eintrag je NAS und Konto. Die Liste der NAS (`devices.json` im Konfigurationsordner der App) enthält keine Geheimnisse.
 5. Beendet DSM eine untätige Sitzung, meldet sich die App still neu an, wenn der Schlüsselbund das Passwort hat; sonst kehrt sie zum Startbildschirm zurück.
 
+## Ersteinrichtung
+
+Solange der Willkommensassistent von DSM nicht gelaufen ist, gibt DSM jedem, der die Weboberfläche öffnet, eine Administrator-Sitzung. Bevor die App nach einem Passwort fragt, prüft sie das: Sie öffnet die Startseite und fragt `SYNO.Core.QuickStart.Info check_permission`. Ein eingerichtetes NAS vergibt keine Sitzung und antwortet mit „keine Sitzung“ (119). (Das Flag `configured` in `SYNO.Core.Desktop.SessionData` hilft nicht: Es bleibt auch nach der Einrichtung `false`.) Bei einem nicht eingerichteten NAS liest sie Passwortregeln, gesperrte Namen und Zeitzonen, zeigt ihr eigenes Formular und schickt nach der Bestätigung einen `SYNO.Entry.Request`, der beim ersten Fehler anhält, in dieser Reihenfolge:
+
+1. Adressen nach Fehlversuchen sperren, Gerätenamen setzen;
+2. das Konto des Benutzers anlegen und zu `administrators` hinzufügen;
+3. die Registrierung bei find.synology.com stoppen;
+4. erst dann dem eingebauten Konto `admin` ein Zufallspasswort geben und es deaktivieren.
+
+Danach meldet sich die App mit dem neuen Konto an und setzt Updates, Zeitzone, Nutzungsstatistiken (aus) und blendet den Willkommensassistenten von DSM aus. Diese späteren Einstellungen sind optional; was DSM ablehnt, wird aufgelistet, die Einrichtung gilt trotzdem als erledigt.
+
 ## Skins
 
 Ein Skin ist ein Satz CSS-Variablen plus einige Formregeln (Eckenradius, Schrift, Höhe der Bedienelemente, Fokusdarstellung). Die Oberfläche setzt `data-skin="linux|macos|windows"` und `data-scheme="light|dark"` auf `<html>`. Standardmäßig folgt der Skin dem Betriebssystem, auf dem die App läuft, und das Farbschema der Systemeinstellung; beides lässt sich in den Einstellungen überschreiben. Komponenten nutzen nur die Variablen, nie feste Farben, ein neuer Skin ist also ein einziger CSS-Block.

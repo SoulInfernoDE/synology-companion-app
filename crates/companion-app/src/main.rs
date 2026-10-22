@@ -6,6 +6,7 @@
 mod commands;
 mod devices;
 mod secrets;
+mod setup;
 
 use tauri::Manager;
 
@@ -31,6 +32,9 @@ fn main() {
             commands::overview,
             commands::disconnect,
             commands::forget_device,
+            setup::probe,
+            setup::begin_setup,
+            setup::complete_setup,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Syno Companion");

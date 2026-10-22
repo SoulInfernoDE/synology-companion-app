@@ -5,6 +5,7 @@
 //! after the user trusted them (see [`tls`]).
 
 mod overview;
+mod setup;
 pub mod tls;
 
 use std::collections::HashMap;
@@ -15,6 +16,9 @@ use serde_json::Value;
 use url::Url;
 
 pub use overview::{Drive, DriveKind, Health, Overview, Volume};
+pub use setup::{
+    PasswordRules, SetupDone, SetupInfo, SetupRequest, SetupState, TimeZone, UpdatePolicy,
+};
 use tls::Verdict;
 
 /// Session name sent to DSM; it shows up in DSM's list of signed-in connections.
@@ -156,6 +160,8 @@ impl Client {
             .map_err(|error| Error::Unexpected(format!("TLS setup: {error}")))?;
         let http = reqwest::Client::builder()
             .tls_backend_preconfigured(tls)
+            // DSM's setup session arrives as a cookie.
+            .cookie_store(true)
             .connect_timeout(Duration::from_secs(6))
             .timeout(Duration::from_secs(30))
             .build()
@@ -173,6 +179,7 @@ impl Client {
         let (tls, verdict) = tls::client_config(None).unwrap();
         let http = reqwest::Client::builder()
             .tls_backend_preconfigured(tls)
+            .cookie_store(true)
             .build()
             .unwrap();
         Self {

@@ -22,8 +22,10 @@ struct Active {
 }
 
 pub struct AppState {
-    store: Mutex<DeviceStore>,
+    pub(crate) store: Mutex<DeviceStore>,
     active: AsyncMutex<Option<Active>>,
+    /// The client holding DSM's setup session while the setup form is open.
+    pub(crate) pending_setup: AsyncMutex<Option<crate::setup::PendingSetup>>,
 }
 
 impl AppState {
@@ -31,6 +33,7 @@ impl AppState {
         Self {
             store: Mutex::new(store),
             active: AsyncMutex::new(None),
+            pending_setup: AsyncMutex::new(None),
         }
     }
 }
@@ -44,7 +47,7 @@ pub struct Failure {
 }
 
 impl Failure {
-    fn new(key: &'static str, detail: impl Into<Option<String>>) -> Self {
+    pub(crate) fn new(key: &'static str, detail: impl Into<Option<String>>) -> Self {
         Self {
             key,
             detail: detail.into(),
@@ -63,7 +66,7 @@ impl From<Error> for Failure {
     }
 }
 
-fn device_name() -> String {
+pub(crate) fn device_name() -> String {
     let system = match std::env::consts::OS {
         "macos" => "macOS",
         "windows" => "Windows",
@@ -120,7 +123,9 @@ pub enum ConnectOutcome {
     Failed(Failure),
 }
 
-async fn keychain<T: Send + 'static>(job: impl FnOnce() -> T + Send + 'static) -> Option<T> {
+pub(crate) async fn keychain<T: Send + 'static>(
+    job: impl FnOnce() -> T + Send + 'static,
+) -> Option<T> {
     spawn_blocking(job).await.ok()
 }
 
@@ -193,12 +198,26 @@ pub async fn connect(
         fingerprint: pin,
         remember_login: request.remember_login,
     };
+    let remember_login = request.remember_login;
+    let device = activate(&state, client, session, device, password, remember_login).await?;
+    Ok(ConnectOutcome::Connected { device })
+}
+
+/// Saves the device and its keychain entry, and makes the session the active one.
+pub(crate) async fn activate(
+    state: &AppState,
+    client: Client,
+    session: Session,
+    device: KnownDevice,
+    password: String,
+    remember_login: bool,
+) -> Result<KnownDevice, Failure> {
     let login = StoredLogin {
-        password: request.remember_login.then_some(password),
+        password: remember_login.then_some(password),
         device_token: session.device_token.clone(),
     };
     {
-        let (id, account) = (id.clone(), account.clone());
+        let (id, account) = (device.id.clone(), device.account.clone());
         // A keychain that is locked or missing must not block the sign-in.
         let _ = keychain(move || secrets::store(&id, &account, &login)).await;
     }
@@ -216,7 +235,7 @@ pub async fn connect(
     if let Some(previous) = previous {
         previous.client.logout(&previous.session).await;
     }
-    Ok(ConnectOutcome::Connected { device })
+    Ok(device)
 }
 
 #[tauri::command]

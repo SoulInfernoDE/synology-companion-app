@@ -62,7 +62,64 @@ export function toFailure(error: unknown): Failure {
   return isFailure(error) ? error : { key: 'unexpected', detail: String(error) };
 }
 
+export type ProbeOutcome =
+  | { status: 'configured' }
+  | { status: 'notConfigured' }
+  | { status: 'untrustedCertificate'; fingerprint: string }
+  | { status: 'certificateChanged'; fingerprint: string }
+  | ({ status: 'failed' } & Failure);
+
+export interface ProbeRequest {
+  host: string;
+  port: number;
+  trustFingerprint?: string;
+}
+
+export interface PasswordRules {
+  minLength: number | null;
+  mixedCase: boolean;
+  numeric: boolean;
+  special: boolean;
+  excludeUsername: boolean;
+}
+
+export interface TimeZone {
+  value: string;
+  display: string;
+  offset: number;
+}
+
+export interface SetupInfo {
+  deviceName: string;
+  passwordRules: PasswordRules;
+  reservedNames: string[];
+  timeZones: TimeZone[];
+}
+
+export type UpdatePolicy = 'important' | 'all' | 'notifyOnly';
+
+export interface CompleteSetupRequest {
+  host: string;
+  port: number;
+  model?: string;
+  deviceName: string;
+  account: string;
+  password: string;
+  timeZone: string;
+  updates: UpdatePolicy;
+  rememberLogin: boolean;
+}
+
+export interface SetupFinished {
+  device: KnownDevice;
+  skipped: string[];
+}
+
 export const discover = () => invoke<FoundNas[]>('discover');
+export const probe = (request: ProbeRequest) => invoke<ProbeOutcome>('probe', { request });
+export const beginSetup = (request: ProbeRequest) => invoke<SetupInfo>('begin_setup', { request });
+export const completeSetup = (request: CompleteSetupRequest) =>
+  invoke<SetupFinished>('complete_setup', { request });
 export const knownDevices = () => invoke<KnownDevice[]>('known_devices');
 export const connect = (request: ConnectRequest) => invoke<ConnectOutcome>('connect', { request });
 export const overview = () => invoke<Overview>('overview');

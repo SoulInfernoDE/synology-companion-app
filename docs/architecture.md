@@ -48,6 +48,17 @@
 4. **Keychain.** The device token, and the password only if the user asks for it, are stored in the system keychain under "Syno Companion", one entry per NAS and account. The list of NAS (`devices.json` in the app's config folder) holds no secrets.
 5. When DSM ends an idle session, the app signs in again quietly if the keychain has the password; otherwise it returns to the start screen.
 
+## First-time setup
+
+Until DSM's welcome wizard has run, DSM hands an administrator session to whoever opens the web interface. Before asking for a password, the app checks this: it opens the start page and asks `SYNO.Core.QuickStart.Info check_permission`. A NAS that is set up hands out no session and answers "no session" (119). (The `configured` flag in `SYNO.Core.Desktop.SessionData` is no help: it stays `false` after setup, too.) For a NAS that is not set up, it reads the password rules, reserved names and time zones, shows its own form and, after the user confirms, sends one `SYNO.Entry.Request` that stops at the first error, in this order:
+
+1. block addresses after failed sign-ins, set the device name;
+2. create the user's account and add it to `administrators`;
+3. stop the registration with find.synology.com;
+4. only then give the built-in `admin` account a random password and disable it.
+
+Afterwards the app signs in with the new account and sets updates, time zone, usage statistics (off) and hides DSM's welcome wizard. These later settings are optional; any DSM refuses are listed, the setup still counts as done.
+
 ## Skins
 
 A skin is a set of CSS custom properties plus a few shape rules (corner radius, font, control height, focus style). The UI sets `data-skin="linux|macos|windows"` and `data-scheme="light|dark"` on `<html>`. By default the skin follows the operating system the app runs on and the scheme follows the system setting; both can be overridden in the settings. Components only use the tokens, never fixed colors, so a new skin is one CSS block.

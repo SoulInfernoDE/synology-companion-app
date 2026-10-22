@@ -206,3 +206,167 @@ async fn self_signed_certificate_needs_trust_then_pin_works() {
         Error::CertificateChanged { fingerprint: print }
     );
 }
+
+#[tokio::test]
+async fn setup_creates_the_owner_before_locking_the_builtin_admin() {
+    let (server, client) = mock_nas().await;
+    Mock::given(method("GET"))
+        .and(path("/"))
+        .respond_with(ResponseTemplate::new(200).insert_header("set-cookie", "id=setup; path=/"))
+        .mount(&server)
+        .await;
+    let all_ok = |count: usize| {
+        let result: Vec<Value> = (0..count).map(|_| json!({ "success": true })).collect();
+        ResponseTemplate::new(200).set_body_json(
+            json!({ "success": true, "data": { "has_fail": false, "result": result } }),
+        )
+    };
+    Mock::given(path("/webapi/entry.cgi/SYNO.Entry.Request"))
+        .and(body_string_contains("SYNO.Core.Group.Member"))
+        .respond_with(all_ok(7))
+        .mount(&server)
+        .await;
+    Mock::given(path("/webapi/entry.cgi/SYNO.Entry.Request"))
+        .and(body_string_contains("hide_welcome"))
+        .respond_with(all_ok(5))
+        .mount(&server)
+        .await;
+    Mock::given(path("/webapi/entry.cgi"))
+        .and(body_string_contains("method=login"))
+        .and(body_string_contains("account=owner"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_json(json!({ "success": true, "data": { "sid": "owner-session" } })),
+        )
+        .mount(&server)
+        .await;
+
+    let done = client
+        .complete_setup(&SetupRequest {
+            device_name: "nas-test".into(),
+            account: "owner".into(),
+            password: "Secret-1234".into(),
+            time_zone: "Amsterdam".into(),
+            updates: UpdatePolicy::Important,
+            device_label: "Syno Companion test".into(),
+        })
+        .await
+        .unwrap();
+    assert_eq!(done.session.sid, "owner-session");
+    assert!(done.skipped.is_empty());
+
+    let requests = server.received_requests().await.unwrap();
+    let setup = requests
+        .iter()
+        .find(|request| String::from_utf8_lossy(&request.body).contains("SYNO.Core.Group.Member"))
+        .expect("setup request");
+    let form: Vec<(String, String)> = url::form_urlencoded::parse(&setup.body)
+        .into_owned()
+        .collect();
+    let field = |name: &str| {
+        form.iter()
+            .find(|(key, _)| key == name)
+            .map(|(_, value)| value.clone())
+            .unwrap()
+    };
+    assert_eq!(field("stop_when_error"), "true");
+    assert_eq!(field("mode"), "\"sequential\"");
+    let calls: Vec<Value> = serde_json::from_str(&field("compound")).unwrap();
+    let position = |matches: &dyn Fn(&Value) -> bool, what: &str| {
+        calls
+            .iter()
+            .position(matches)
+            .unwrap_or_else(|| panic!("{what} missing"))
+    };
+    let created = position(
+        &|c| c["api"] == "SYNO.Core.User" && c["method"] == "create",
+        "create",
+    );
+    let promoted = position(&|c| c["api"] == "SYNO.Core.Group.Member", "group");
+    let scrambled = position(
+        &|c| c["name"] == "admin" && c.get("password").is_some(),
+        "admin password",
+    );
+    let expired = position(
+        &|c| c["name"] == "admin" && c["expired"] == "now",
+        "admin expiry",
+    );
+    assert!(created < promoted && promoted < scrambled && scrambled < expired);
+    assert_eq!(calls[created]["name"], "owner");
+    assert_ne!(calls[scrambled]["password"], "Secret-1234");
+}
+
+#[tokio::test]
+async fn failed_setup_step_stops_with_its_api() {
+    let (server, client) = mock_nas().await;
+    Mock::given(method("GET"))
+        .and(path("/"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
+    Mock::given(path("/webapi/entry.cgi/SYNO.Entry.Request"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "success": true, "data": {
+            "has_fail": true,
+            "result": [
+                { "api": "SYNO.Core.Security.AutoBlock", "method": "set", "success": true },
+                { "api": "SYNO.Core.Network", "method": "set", "success": true },
+                { "api": "SYNO.Core.User", "method": "create", "success": false, "error": { "code": 3106 } }
+            ]
+        }})))
+        .mount(&server)
+        .await;
+
+    let error = client
+        .complete_setup(&SetupRequest {
+            device_name: "nas".into(),
+            account: "admin".into(),
+            password: "x".into(),
+            time_zone: "Amsterdam".into(),
+            updates: UpdatePolicy::NotifyOnly,
+            device_label: "test".into(),
+        })
+        .await
+        .unwrap_err();
+    assert_eq!(
+        error,
+        Error::Api {
+            api: "SYNO.Core.User create".into(),
+            code: 3106
+        }
+    );
+}
+
+#[tokio::test]
+async fn only_a_nas_that_hands_out_a_session_needs_setup() {
+    let (server, client) = mock_nas().await;
+    Mock::given(method("GET"))
+        .and(path("/"))
+        .respond_with(ResponseTemplate::new(200).insert_header("set-cookie", "id=setup; path=/"))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/webapi/entry.cgi"))
+        .and(wiremock::matchers::query_param(
+            "method",
+            "check_permission",
+        ))
+        .and(wiremock::matchers::header("cookie", "id=setup"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "success": true })))
+        .mount(&server)
+        .await;
+    assert_eq!(
+        client.setup_state().await.unwrap(),
+        SetupState::NotConfigured
+    );
+
+    let (server, client) = mock_nas().await;
+    Mock::given(method("GET"))
+        .and(path("/webapi/entry.cgi"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_json(json!({ "success": false, "error": { "code": 119 } })),
+        )
+        .mount(&server)
+        .await;
+    assert_eq!(client.setup_state().await.unwrap(), SetupState::Configured);
+}

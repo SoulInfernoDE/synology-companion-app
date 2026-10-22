@@ -15,8 +15,10 @@ Each version is usable on its own. Features that change the NAS beyond DSM's own
 - [x] Self-signed DSM certificates: show the fingerprint, pin it once trusted, warn when it changes
 - [x] Credentials in the system keychain (Secret Service, macOS Keychain, Windows Credential Manager)
 - [x] Saved NAS: connect again with one click, remove from the list
+- [x] First-time setup of a NAS whose DSM welcome wizard has not run: own administrator account, built-in `admin` locked, device name, time zone, updates; usage statistics off
+- [ ] Try the first-time setup on the Virtual DSM 7.4.1 (snapshot before, roll back after)
 - [x] Dashboard: system, utilisation, volumes, drives
-- [ ] Check the dashboard fields against a Virtual DSM 7.3 and record its answers as test fixtures
+- [x] Check the dashboard fields against a Virtual DSM 7.4.1 and record its answers as test fixtures (drives and temperature need real hardware)
 - [x] CI: checks on Linux, macOS and Windows; licence and advisory checks
 - [x] Release builds for Linux x86_64 and arm64 (deb, rpm, AppImage), macOS universal (dmg) and Windows (msi, exe) ([releasing](docs/releasing.md))
 - [ ] Mock DSM server with recorded responses for automated tests

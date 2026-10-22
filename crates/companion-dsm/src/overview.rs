@@ -273,6 +273,40 @@ mod tests {
     use super::*;
     use serde_json::json;
 
+    /// Answers recorded from a Virtual DSM 7.4.1 that was not set up yet
+    /// (serial number, UUIDs, time and CPU removed).
+    #[test]
+    fn reads_virtual_dsm_7_4_1() {
+        let fixture = |name: &str| -> Value {
+            let path = format!(
+                "{}/tests/fixtures/dsm-7.4.1-virtualdsm/{name}",
+                env!("CARGO_MANIFEST_DIR")
+            );
+            serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap()
+        };
+        let overview = Overview::from_api(
+            &fixture("system-info.json"),
+            &fixture("utilization.json"),
+            &fixture("storage-load-info.json"),
+        );
+        assert_eq!(overview.model, "VirtualDSM");
+        assert_eq!(overview.dsm, "7.4.1-90080");
+        assert_eq!(overview.uptime_seconds, 5 * 60 + 39);
+        assert_eq!(overview.temperature_c, None);
+        assert_eq!(overview.memory_bytes, 12 * 1024 * 1024 * 1024);
+        assert_eq!(overview.memory_percent, 4.0);
+        assert!(overview.drives.is_empty());
+
+        let [volume] = overview.volumes.as_slice() else {
+            panic!("one volume")
+        };
+        assert_eq!(volume.number, Some(1));
+        assert_eq!(volume.raid.as_deref(), Some("Basic"));
+        assert_eq!(volume.total_bytes, 412_310_568_960);
+        assert_eq!(volume.used_bytes, 75_468_800);
+        assert_eq!(volume.health, Health::Normal);
+    }
+
     #[test]
     fn uptime_reads_hours_minutes_seconds() {
         assert_eq!(uptime(&json!("460:12:05")), 460 * 3600 + 12 * 60 + 5);

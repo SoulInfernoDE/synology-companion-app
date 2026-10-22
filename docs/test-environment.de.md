@@ -33,7 +33,7 @@ Alles, was ein NAS verändert (SSH-Einrichtung, Rezepte, Web Station, Nextcloud)
 
 ### Vorgeschlagener Aufbau
 
-1. Ein virtuelles DSM mit derselben DSM-Version wie das produktive NAS anlegen (derzeit 7.3).
+1. Ein virtuelles DSM mit derselben DSM-Version wie das produktive NAS anlegen (derzeit 7.4.1).
 2. Einen Admin-Benutzer nur zum Testen anlegen und für ihn 2FA einschalten, damit der Anmeldeablauf mit 2FA getestet wird.
 3. Web Station, PHP 8.x, MariaDB 10 und Container Manager installieren; für den Nextcloud-Tab Nextcloud so installieren wie auf dem produktiven NAS.
 4. Von diesem Stand einen Snapshot anlegen. Jeder Testlauf beginnt damit.

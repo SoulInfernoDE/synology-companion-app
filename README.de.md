@@ -9,11 +9,11 @@
 
 > Deutsche Fassung. Englisches Original: [README.md](README.md)
 
-**Syno Companion** ist eine freie Open-Source-Desktop-App für **Synology-NAS** unter **Linux, macOS und Windows**. Sie bringt auf den Desktop, was Synology auf dem Handy anbietet (DS finder, DS file, DS get), und schließt die Lücken, die DSM 7.3 offen lässt: Festplatten von Drittanbietern, Community-Pakete, Komponenten-Updates und Einstellungen, die DSM nicht anbietet oder bei jedem Update zurücksetzt.
+**Syno Companion** ist eine freie Open-Source-Desktop-App für **Synology-NAS** unter **Linux, macOS und Windows**. Sie bringt auf den Desktop, was Synology auf dem Handy anbietet (DS finder, DS file, DS get), und schließt die Lücken, die DSM offen lässt: Festplatten von Drittanbietern, Community-Pakete, Komponenten-Updates und Einstellungen, die DSM nicht anbietet oder bei jedem Update zurücksetzt.
 
 Sie ist für **normale Benutzer ohne Shell-Erfahrung** gedacht. Alles, was über DSM hinaus ins System eingreift, liegt hinter einem **Expertenmodus**, zeigt vorher die genauen Befehle, legt zuerst eine Sicherung an und lässt sich rückgängig machen.
 
-> **Stand: Pre-Alpha.** NAS finden, Anmeldung (mit 2FA und Zertifikatsprüfung) und Übersicht funktionieren; noch nicht an einem echten DSM 7.3 getestet. Siehe [Roadmap](ROADMAP.de.md).
+> **Stand: Pre-Alpha.** NAS finden, Anmeldung (mit 2FA und Zertifikatsprüfung) und Übersicht funktionieren; noch nicht an einem echten DSM 7.4 getestet. Siehe [Roadmap](ROADMAP.de.md).
 >
 > Syno Companion ist ein unabhängiges Community-Projekt. Es steht in keiner Verbindung zu Synology Inc. und wird von Synology weder unterstützt noch empfohlen. „Synology“ und „DSM“ sind Marken der Synology Inc.
 
@@ -22,6 +22,7 @@ Sie ist für **normale Benutzer ohne Shell-Erfahrung** gedacht. Alles, was über
 **Alltag (ohne Expertenmodus)**
 
 - **Finden und verbinden:** NAS im lokalen Netz werden automatisch gefunden; Anmeldung mit Zwei-Faktor-Anmeldung, Gerät merken, mehrere NAS nebeneinander. Zugangsdaten landen im Schlüsselbund des Systems.
+- **Ersteinrichtung:** Ein neues NAS, dessen DSM-Willkommensassistent noch nicht gelaufen ist, wird aus der App eingerichtet: eigenes Administratorkonto, eingebautes Konto `admin` gesperrt, Gerätename, Zeitzone und Updates; Nutzungsstatistiken bleiben aus. Bis dahin darf jeder im Netzwerk das NAS verwalten, deshalb warnt die App davor.
 - **Übersicht:** CPU, Arbeitsspeicher, Netzwerk, Volumes und ihre Belegung, Zustand und Temperatur der Festplatten, Laufzeit, verfügbare DSM- und Paket-Updates.
 - **Tray und Benachrichtigungen:** herabgestuftes Volume, fehlgeschlagene Sicherung, Festplattenwarnungen, neue Updates.
 - **Steuerung:** Wake-on-LAN, Neustart, Herunterfahren, Piepton abschalten.

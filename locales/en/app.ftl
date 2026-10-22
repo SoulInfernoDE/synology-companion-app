@@ -160,3 +160,50 @@ error-discovery = The local network could not be searched.
 error-storage = The list of NAS could not be saved.
 error-keychain = The system keychain could not be used.
 error-unexpected = Something unexpected happened.
+
+## First-time setup
+
+signin-checking = Checking the NAS …
+setup-title = Set up { $name }
+setup-open-warning = This NAS is not set up yet. Until it is, anyone on your network can manage it without a password. Set it up now.
+setup-intro = { -app-name } does what DSM's welcome wizard does: it creates your administrator account, locks the built-in "admin" account and sets the basics. Nothing changes before you confirm.
+setup-start = Start setup
+setup-device-name = Device name
+setup-device-name-hint = How the NAS appears on your network, up to 15 characters.
+setup-account-title = Your administrator account
+setup-account-hint = Use a name of your own; the built-in "admin" account is disabled.
+setup-account-reserved = DSM does not allow this name.
+setup-password-repeat = Repeat password
+setup-rule-length =
+    { $count ->
+        [one] At least one character
+       *[other] At least { $count } characters
+    }
+setup-rule-case = Upper and lower case letters
+setup-rule-number = At least one number
+setup-rule-special = At least one special character
+setup-rule-name = Does not contain the account name
+setup-rule-repeat = Both passwords match
+setup-time-zone = Time zone
+setup-updates = DSM updates
+setup-updates-important = Install important and security updates automatically (recommended)
+setup-updates-all = Install all updates automatically
+setup-updates-notifyOnly = Only notify me
+setup-review = Review
+setup-confirm-title = This will happen on the NAS
+setup-do-name = Name the NAS “{ $name }”
+setup-do-account = Create the administrator account “{ $account }”
+setup-do-admin = Give the built-in “admin” account a random password and disable it
+setup-do-zone = Set the time zone to { $zone }
+setup-do-updates-important = Install important and security updates automatically
+setup-do-updates-all = Install all updates automatically
+setup-do-updates-notifyOnly = Only notify about updates
+setup-do-privacy = Turn off usage statistics and registration with find.synology.com
+setup-do-autoblock = Block addresses after 10 failed sign-ins within 5 minutes
+setup-confirm-hint = Your account is created first. The built-in account is only locked afterwards, and only if every step before it worked.
+setup-run = Set up NAS
+setup-running = Setting up the NAS. This takes a moment …
+setup-done = The NAS is set up
+setup-skipped = DSM did not accept some of the optional settings. You can change them later in DSM:
+setup-continue = Continue
+error-setup-expired = The setup form was open too long. Please start the setup again.

@@ -160,3 +160,50 @@ error-discovery = Das lokale Netzwerk konnte nicht durchsucht werden.
 error-storage = Die Liste der NAS konnte nicht gespeichert werden.
 error-keychain = Der Schlüsselbund des Systems konnte nicht genutzt werden.
 error-unexpected = Etwas Unerwartetes ist passiert.
+
+## Ersteinrichtung
+
+signin-checking = NAS wird geprüft …
+setup-title = { $name } einrichten
+setup-open-warning = Dieses NAS ist noch nicht eingerichtet. Bis dahin kann jeder in deinem Netzwerk es ohne Passwort verwalten. Richte es jetzt ein.
+setup-intro = { -app-name } erledigt, was der Willkommensassistent von DSM tut: Es legt dein Administratorkonto an, sperrt das eingebaute Konto „admin“ und nimmt die Grundeinstellungen vor. Bevor du bestätigst, ändert sich nichts.
+setup-start = Einrichtung starten
+setup-device-name = Gerätename
+setup-device-name-hint = So erscheint das NAS in deinem Netzwerk, bis zu 15 Zeichen.
+setup-account-title = Dein Administratorkonto
+setup-account-hint = Wähle einen eigenen Namen; das eingebaute Konto „admin“ wird deaktiviert.
+setup-account-reserved = Diesen Namen erlaubt DSM nicht.
+setup-password-repeat = Passwort wiederholen
+setup-rule-length =
+    { $count ->
+        [one] Mindestens ein Zeichen
+       *[other] Mindestens { $count } Zeichen
+    }
+setup-rule-case = Groß- und Kleinbuchstaben
+setup-rule-number = Mindestens eine Ziffer
+setup-rule-special = Mindestens ein Sonderzeichen
+setup-rule-name = Enthält nicht den Kontonamen
+setup-rule-repeat = Beide Passwörter stimmen überein
+setup-time-zone = Zeitzone
+setup-updates = DSM-Updates
+setup-updates-important = Wichtige und Sicherheitsupdates automatisch installieren (empfohlen)
+setup-updates-all = Alle Updates automatisch installieren
+setup-updates-notifyOnly = Nur benachrichtigen
+setup-review = Prüfen
+setup-confirm-title = Das passiert auf dem NAS
+setup-do-name = Das NAS „{ $name }“ nennen
+setup-do-account = Das Administratorkonto „{ $account }“ anlegen
+setup-do-admin = Dem eingebauten Konto „admin“ ein Zufallspasswort geben und es deaktivieren
+setup-do-zone = Die Zeitzone auf { $zone } setzen
+setup-do-updates-important = Wichtige und Sicherheitsupdates automatisch installieren
+setup-do-updates-all = Alle Updates automatisch installieren
+setup-do-updates-notifyOnly = Bei Updates nur benachrichtigen
+setup-do-privacy = Nutzungsstatistiken und die Registrierung bei find.synology.com ausschalten
+setup-do-autoblock = Adressen nach 10 fehlgeschlagenen Anmeldungen innerhalb von 5 Minuten sperren
+setup-confirm-hint = Dein Konto wird zuerst angelegt. Das eingebaute Konto wird erst danach gesperrt, und nur wenn alle Schritte davor geklappt haben.
+setup-run = NAS einrichten
+setup-running = Das NAS wird eingerichtet. Das dauert einen Moment …
+setup-done = Das NAS ist eingerichtet
+setup-skipped = Einige der optionalen Einstellungen hat DSM nicht übernommen. Du kannst sie später in DSM ändern:
+setup-continue = Weiter
+error-setup-expired = Das Einrichtungsformular war zu lange offen. Bitte starte die Einrichtung erneut.

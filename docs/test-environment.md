@@ -33,7 +33,7 @@ Everything that changes a NAS (SSH setup, recipes, Web Station, Nextcloud) is te
 
 ### Suggested setup
 
-1. Create a virtual DSM with the same DSM version as the production NAS (currently 7.3).
+1. Create a virtual DSM with the same DSM version as the production NAS (currently 7.4.1).
 2. Create an admin user only for testing and enable 2FA for it, so the login flow is tested with 2FA.
 3. Install Web Station, PHP 8.x, MariaDB 10 and Container Manager; for the Nextcloud tab install Nextcloud as on the production NAS.
 4. Take a snapshot of this state. Every test run starts from it.

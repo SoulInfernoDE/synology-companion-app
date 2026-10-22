@@ -9,11 +9,11 @@
 
 > English original. German version: [README.de.md](README.de.md)
 
-**Syno Companion** is a free, open-source desktop app for **Synology NAS** on **Linux, macOS and Windows**. It brings what Synology offers on phones (DS finder, DS file, DS get) to the desktop, and closes the gaps that DSM 7.3 leaves open: third-party drives, community packages, component updates and settings that DSM does not expose or resets with every update.
+**Syno Companion** is a free, open-source desktop app for **Synology NAS** on **Linux, macOS and Windows**. It brings what Synology offers on phones (DS finder, DS file, DS get) to the desktop, and closes the gaps that DSM leaves open: third-party drives, community packages, component updates and settings that DSM does not expose or resets with every update.
 
 It is made for **regular users without shell experience**. Everything that touches the system beyond what DSM offers sits behind an **expert mode**, shows the exact commands before it runs them, makes a backup first and can be undone.
 
-> **Status: pre-alpha.** Finding NAS, signing in (with 2FA and certificate check) and the dashboard work; not yet tested against a real DSM 7.3. See the [roadmap](ROADMAP.md).
+> **Status: pre-alpha.** Finding NAS, signing in (with 2FA and certificate check) and the dashboard work; not yet tested against a real DSM 7.4. See the [roadmap](ROADMAP.md).
 >
 > Syno Companion is an independent community project. It is not affiliated with, endorsed by or supported by Synology Inc. "Synology" and "DSM" are trademarks of Synology Inc.
 
@@ -22,6 +22,7 @@ It is made for **regular users without shell experience**. Everything that touch
 **Everyday (no expert mode needed)**
 
 - **Find and connect:** NAS on the local network are found automatically; sign in with two-factor authentication, remember the device, several NAS side by side. Credentials go to the system keychain.
+- **First-time setup:** a new NAS whose DSM welcome wizard has not run is set up from the app: your own administrator account, the built-in `admin` account locked, device name, time zone and updates; usage statistics stay off. Until then, DSM lets anyone on the network manage the NAS, so the app warns about it.
 - **Dashboard:** CPU, memory, network, volumes and their usage, drive health and temperature, uptime, available DSM and package updates.
 - **Tray and notifications:** degraded volume, failed backup, drive warnings, new updates.
 - **Control:** Wake-on-LAN, restart, shut down, silence the beeper.
