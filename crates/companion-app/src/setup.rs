@@ -5,7 +5,7 @@ use companion_dsm::{Client, Error, SetupInfo, SetupRequest, SetupState, UpdatePo
 use serde::{Deserialize, Serialize};
 use tauri::State;
 
-use crate::commands::{AppState, Failure, activate, device_name};
+use crate::commands::{AppState, Failure, activate, device_name, identity};
 use crate::devices::{KnownDevice, device_id};
 
 /// DSM's setup session, kept from opening the form until it is sent.
@@ -140,10 +140,11 @@ pub async fn complete_setup(
         })
         .await?;
 
+    let (_, dsm_model) = identity(&pending.client, &done.session).await;
     let device = KnownDevice {
         id,
         name: request.device_name.trim().to_owned(),
-        model: request.model.unwrap_or_default(),
+        model: dsm_model.or(request.model).unwrap_or_default(),
         host,
         port: request.port,
         account,

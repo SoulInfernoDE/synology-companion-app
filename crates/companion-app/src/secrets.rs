@@ -38,7 +38,20 @@ pub fn store(device_id: &str, account: &str, login: &StoredLogin) -> Result<(), 
         };
     }
     let json = serde_json::to_string(login).map_err(|error| error.to_string())?;
-    entry.set_password(&json).map_err(|error| error.to_string())
+    entry
+        .set_password(&json)
+        .map_err(|error| error.to_string())?;
+    // Secret Service tools such as Seahorse show the label; the library's own one
+    // reads like an internal key.
+    #[cfg(target_os = "linux")]
+    {
+        let label = format!("{SERVICE} – {account}@{device_id}");
+        let _ = entry.update_attributes(&std::collections::HashMap::from([(
+            "label",
+            label.as_str(),
+        )]));
+    }
+    Ok(())
 }
 
 pub fn forget(device_id: &str, account: &str) -> Result<(), String> {

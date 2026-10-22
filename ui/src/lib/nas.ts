@@ -15,9 +15,19 @@ export interface Volume {
   /** 1 for /volume1; the interface names it in the user's language. */
   number: number | null;
   raid: string | null;
+  /** "Btrfs" or "ext4". */
+  fileSystem: string | null;
   totalBytes: number;
   usedBytes: number;
   health: Health;
+}
+
+/** A wired network port; speeds in Mbit/s. */
+export interface NetworkPort {
+  name: string;
+  connected: boolean;
+  linkMbps: number | null;
+  maxMbps: number | null;
 }
 
 export interface Drive {
@@ -40,10 +50,17 @@ export interface Overview {
   uptimeSeconds: number;
   temperatureC: number | null;
   cpuPercent: number;
+  /** e.g. "Intel Celeron J4125"; a Virtual DSM reports its host's processor. */
+  cpuModel: string | null;
+  cpuCores: number | null;
+  cpuClockMhz: number | null;
+  /** Microarchitecture, e.g. "Gemini Lake Refresh". */
+  cpuArchitecture: string | null;
   memoryPercent: number;
   memoryBytes: number;
   networkRxBytesPerSecond: number;
   networkTxBytesPerSecond: number;
+  networkPorts: NetworkPort[];
   volumes: Volume[];
   drives: Drive[];
   updates?: { dsm: string | null; packages: number } | null;
@@ -64,15 +81,25 @@ export const demoOverview: Overview = {
   uptimeSeconds: 19 * 86400 + 4 * 3600 + 12 * 60,
   temperatureC: 41,
   cpuPercent: 12,
+  cpuModel: 'AMD Ryzen R1600',
+  cpuCores: 2,
+  cpuClockMhz: 2600,
+  cpuArchitecture: 'Zen',
   memoryPercent: 46,
   memoryBytes: 32 * GiB,
   networkRxBytesPerSecond: 3_400_000,
   networkTxBytesPerSecond: 820_000,
+  networkPorts: [
+    { name: 'eth0', connected: true, linkMbps: 1000, maxMbps: 1000 },
+    { name: 'eth1', connected: false, linkMbps: null, maxMbps: 1000 },
+    { name: 'eth2', connected: true, linkMbps: 10_000, maxMbps: 10_000 },
+  ],
   volumes: [
     {
       id: 'volume_1',
       number: 1,
       raid: 'SHR-1',
+      fileSystem: 'Btrfs',
       totalBytes: 21.8 * TB,
       usedBytes: 13.1 * TB,
       health: 'normal',
@@ -81,6 +108,7 @@ export const demoOverview: Overview = {
       id: 'volume_2',
       number: 2,
       raid: 'Basic (NVMe)',
+      fileSystem: 'Btrfs',
       totalBytes: 0.98 * TB,
       usedBytes: 0.21 * TB,
       health: 'normal',

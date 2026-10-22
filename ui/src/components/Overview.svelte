@@ -17,6 +17,13 @@
 
   let { overview, name, demo }: { overview: Overview; name: string; demo: boolean } = $props();
 
+  /** Link speeds in Mbit/s, shown as Gbit/s from 1000 on. */
+  function speed(mbps: number): string {
+    return mbps >= 1000
+      ? t('overview-speed-gbit', { value: mbps / 1000 })
+      : t('overview-speed-mbit', { value: mbps });
+  }
+
   const badgeClass: Record<Health, string> = {
     normal: 'success',
     warning: 'warning',
@@ -66,6 +73,20 @@
       <h2><Cpu size={16} aria-hidden="true" /> {t('overview-cpu')}</h2>
       <p class="value">{percent(overview.cpuPercent)}</p>
       <Meter value={overview.cpuPercent} label={t('overview-cpu')} />
+      {#if overview.cpuModel}
+        <p class="detail subtle">
+          {[
+            overview.cpuModel,
+            overview.cpuArchitecture,
+            overview.cpuCores ? t('overview-cpu-cores', { count: overview.cpuCores }) : null,
+            overview.cpuClockMhz
+              ? t('overview-cpu-clock', { ghz: overview.cpuClockMhz / 1000 })
+              : null,
+          ]
+            .filter(Boolean)
+            .join(' · ')}
+        </p>
+      {/if}
     </article>
     <article class="card tile">
       <h2><MemoryStick size={16} aria-hidden="true" /> {t('overview-memory')}</h2>
@@ -86,6 +107,27 @@
         <span><ArrowUp size={15} aria-hidden="true" />{rate(overview.networkTxBytesPerSecond)}</span
         >
       </p>
+      {#if overview.networkPorts.length > 0}
+        <ul class="ports">
+          {#each overview.networkPorts as port (port.name)}
+            <li class:off={!port.connected}>
+              <span class="port-name">{port.name}</span>
+              {#if port.connected && port.linkMbps}
+                {speed(port.linkMbps)}
+                {#if port.maxMbps && port.maxMbps > port.linkMbps}
+                  <span class="subtle"
+                    >({t('overview-port-max', { speed: speed(port.maxMbps) })})</span
+                  >
+                {/if}
+              {:else if port.connected}
+                {t('overview-port-connected')}
+              {:else}
+                {t('overview-port-disconnected')}
+              {/if}
+            </li>
+          {/each}
+        </ul>
+      {/if}
     </article>
     {#if overview.temperatureC !== null}
       <article class="card tile">
@@ -106,7 +148,11 @@
           <li class="volume">
             <div class="line">
               <strong>{volumeName}</strong>
-              {#if volume.raid}<span class="subtle">{volume.raid}</span>{/if}
+              {#if volume.raid || volume.fileSystem}
+                <span class="subtle"
+                  >{[volume.raid, volume.fileSystem].filter(Boolean).join(' · ')}</span
+                >
+              {/if}
               <span class="badge {badgeClass[volume.health]}">{t(`health-${volume.health}`)}</span>
             </div>
             <Meter value={used} label={volumeName} />
@@ -237,6 +283,11 @@
     font-weight: 400;
   }
 
+  .detail {
+    margin-top: -2px;
+    line-height: 1.3;
+  }
+
   .rates {
     display: flex;
     flex-direction: column;
@@ -247,6 +298,27 @@
     display: flex;
     align-items: center;
     gap: 6px;
+  }
+
+  .ports {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.9em;
+  }
+
+  .ports li.off {
+    color: var(--text-3);
+  }
+
+  .port-name {
+    display: inline-block;
+    min-width: 4.5em;
+    font-family: ui-monospace, 'SF Mono', 'Cascadia Mono', 'DejaVu Sans Mono', monospace;
+    font-size: 0.92em;
   }
 
   .columns {

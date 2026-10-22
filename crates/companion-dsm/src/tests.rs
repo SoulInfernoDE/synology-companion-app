@@ -11,6 +11,7 @@ use super::*;
 fn api_list() -> Value {
     json!({ "success": true, "data": {
         "SYNO.API.Auth": { "path": "entry.cgi", "minVersion": 1, "maxVersion": 7 },
+        "SYNO.Core.Network": { "path": "entry.cgi", "minVersion": 1, "maxVersion": 2 },
         "SYNO.Core.System": { "path": "entry.cgi", "minVersion": 1, "maxVersion": 3 },
         "SYNO.Core.System.Utilization": { "path": "entry.cgi", "minVersion": 1, "maxVersion": 1 },
         "SYNO.Storage.CGI.Storage": { "path": "entry.cgi", "minVersion": 1, "maxVersion": 1 }
@@ -369,4 +370,41 @@ async fn only_a_nas_that_hands_out_a_session_needs_setup() {
         .mount(&server)
         .await;
     assert_eq!(client.setup_state().await.unwrap(), SetupState::Configured);
+}
+
+#[tokio::test]
+async fn identity_reads_server_name_and_model_and_tolerates_refusals() {
+    let (server, client) = mock_nas().await;
+    Mock::given(path("/webapi/entry.cgi"))
+        .and(body_string_contains("method=login"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_json(json!({ "success": true, "data": { "sid": "s" } })),
+        )
+        .mount(&server)
+        .await;
+    Mock::given(path("/webapi/entry.cgi"))
+        .and(body_string_contains("api=SYNO.Core.Network&"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_json(json!({ "success": false, "error": { "code": 105 } })),
+        )
+        .mount(&server)
+        .await;
+    Mock::given(path("/webapi/entry.cgi"))
+        .and(body_string_contains("api=SYNO.Core.System&"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_json(json!({ "success": true, "data": { "model": "VirtualDSM" } })),
+        )
+        .mount(&server)
+        .await;
+
+    let session = client.login(&credentials()).await.unwrap();
+    let (name, model) = client.identity(&session).await;
+    assert_eq!(
+        name,
+        Err(Error::PermissionDenied("SYNO.Core.Network".into()))
+    );
+    assert_eq!(model, Ok("VirtualDSM".to_owned()));
 }

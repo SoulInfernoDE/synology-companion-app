@@ -45,6 +45,17 @@ overview-uptime = Läuft seit { $duration }
 overview-dsm = { -dsm } { $version }
 overview-kernel = Kernel { $version }
 overview-cpu = Prozessor
+overview-cpu-cores =
+    { $count ->
+        [one] ein Kern
+       *[other] { $count } Kerne
+    }
+overview-cpu-clock = { NUMBER($ghz, maximumFractionDigits: 1) } GHz
+overview-speed-gbit = { NUMBER($value, maximumFractionDigits: 1) } Gbit/s
+overview-speed-mbit = { $value } Mbit/s
+overview-port-max = bis { $speed }
+overview-port-connected = verbunden
+overview-port-disconnected = nicht verbunden
 overview-memory = Arbeitsspeicher
 overview-memory-of = von { $total }
 overview-network = Netzwerk

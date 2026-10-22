@@ -4,6 +4,7 @@
 //! appear in URLs or server logs. Certificates are checked by the system or pinned
 //! after the user trusted them (see [`tls`]).
 
+mod cpu;
 mod overview;
 mod setup;
 pub mod tls;
@@ -15,7 +16,7 @@ use serde::Deserialize;
 use serde_json::Value;
 use url::Url;
 
-pub use overview::{Drive, DriveKind, Health, Overview, Volume};
+pub use overview::{Drive, DriveKind, Health, NetworkPort, Overview, Volume};
 pub use setup::{
     PasswordRules, SetupDone, SetupInfo, SetupRequest, SetupState, TimeZone, UpdatePolicy,
 };
@@ -27,6 +28,8 @@ const SESSION_NAME: &str = "SynoCompanion";
 /// APIs this client uses, looked up once per sign-in.
 const APIS: &[&str] = &[
     "SYNO.API.Auth",
+    "SYNO.Core.Network",
+    "SYNO.Core.Network.Ethernet",
     "SYNO.Core.System",
     "SYNO.Core.System.Utilization",
     "SYNO.Storage.CGI.Storage",
@@ -339,6 +342,33 @@ impl Client {
             .await;
     }
 
+    /// The server name and model DSM reports. Each part is an error on its own, so
+    /// an account that may read only one of them still gets that one.
+    pub async fn identity(
+        &self,
+        session: &Session,
+    ) -> (Result<String, Error>, Result<String, Error>) {
+        let named = |value: Result<Value, Error>, key: &str| {
+            value.and_then(|value| {
+                value[key]
+                    .as_str()
+                    .map(str::trim)
+                    .filter(|text| !text.is_empty())
+                    .map(str::to_owned)
+                    .ok_or_else(|| Error::Unexpected(format!("no {key} in the answer")))
+            })
+        };
+        let name = named(
+            self.call(session, "SYNO.Core.Network", "get", 1, &[]).await,
+            "server_name",
+        );
+        let model = named(
+            self.call(session, "SYNO.Core.System", "info", 1, &[]).await,
+            "model",
+        );
+        (name, model)
+    }
+
     /// System, utilisation and storage in one picture.
     pub async fn overview(&self, session: &Session) -> Result<Overview, Error> {
         let system = self
@@ -350,7 +380,28 @@ impl Client {
         let storage = self
             .call(session, "SYNO.Storage.CGI.Storage", "load_info", 1, &[])
             .await?;
-        Ok(Overview::from_api(&system, &utilization, &storage))
+        // Optional: accounts outside the administrators may not list the ports.
+        let ethernet = self
+            .call(session, "SYNO.Core.Network.Ethernet", "list", 2, &[])
+            .await
+            .unwrap_or(Value::Null);
+        let overview = Overview::from_api(&system, &utilization, &storage, &ethernet);
+        // Development builds show the port fields when no speed was recognised, to
+        // check the field names against a real DSM. Field names only, no values.
+        #[cfg(debug_assertions)]
+        if overview
+            .network_ports
+            .iter()
+            .all(|port| port.link_mbps.is_none())
+            && let Some(port) = ethernet.as_array().and_then(|ports| ports.first())
+        {
+            let keys: Vec<&String> = port
+                .as_object()
+                .map(|o| o.keys().collect())
+                .unwrap_or_default();
+            eprintln!("[network] no speed recognised; port fields: {keys:?}");
+        }
+        Ok(overview)
     }
 }
 

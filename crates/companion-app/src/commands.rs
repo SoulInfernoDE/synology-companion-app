@@ -182,14 +182,16 @@ pub async fn connect(
         Err(error) => return Ok(ConnectOutcome::Failed(error.into())),
     };
 
+    // DSM's own server name and model win over what discovery or the list knew.
+    let (dsm_name, dsm_model) = identity(&client, &session).await;
     let device = KnownDevice {
         id: id.clone(),
-        name: request
-            .name
+        name: dsm_name
+            .or(request.name)
             .or_else(|| known.as_ref().map(|device| device.name.clone()))
             .unwrap_or_else(|| host.clone()),
-        model: request
-            .model
+        model: dsm_model
+            .or(request.model)
             .or_else(|| known.as_ref().map(|device| device.model.clone()))
             .unwrap_or_default(),
         host,
@@ -201,6 +203,22 @@ pub async fn connect(
     let remember_login = request.remember_login;
     let device = activate(&state, client, session, device, password, remember_login).await?;
     Ok(ConnectOutcome::Connected { device })
+}
+
+/// Server name and model from DSM; what cannot be read stays `None`.
+pub(crate) async fn identity(
+    client: &Client,
+    session: &Session,
+) -> (Option<String>, Option<String>) {
+    let (name, model) = client.identity(session).await;
+    // Development builds say why a part is missing, in the terminal that runs them.
+    #[cfg(debug_assertions)]
+    for (part, result) in [("server name", &name), ("model", &model)] {
+        if let Err(error) = result {
+            eprintln!("[identity] {part}: {error}");
+        }
+    }
+    (name.ok(), model.ok())
 }
 
 /// Saves the device and its keychain entry, and makes the session the active one.

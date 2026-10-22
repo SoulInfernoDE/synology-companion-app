@@ -36,7 +36,7 @@ Jede Version ist für sich nutzbar. Funktionen, die das NAS über DSMs eigene Ei
 - [ ] SSH-Assistent: SSH über DSM einschalten (nach Rückfrage), ed25519-Schlüssel erzeugen oder vorhandenen nehmen, mit den Rechten hinterlegen, die DSM erwartet (Home 755, `.ssh` 700, `authorized_keys` 600), Host-Schlüssel merken
 - [ ] `sudo` über den Schlüsselbund, nie in einer Befehlszeile
 - [ ] Eingebautes Terminal für alle, die eins möchten
-- [ ] Diagnose: DSM-Build, Kernel-Version, Kernel-Funktionen (`io_uring` und andere aus `/proc/config.gz` oder `/proc/kallsyms`)
+- [ ] Diagnose: DSM-Build, Kernel-Version, Kernel-Funktionen (`io_uring` und andere aus `/proc/config.gz` oder `/proc/kallsyms`), Speichermodule mit Typ und Takt (`dmidecode`; die DSM-Web-API meldet nur die Gesamtgröße), Netzwerkchips und Treiber (`ethtool -i`)
 
 ## v0.4 – Erweitern (Expertenmodus)
 

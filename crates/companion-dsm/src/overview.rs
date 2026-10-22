@@ -43,9 +43,24 @@ pub struct Volume {
     pub number: Option<u32>,
     /// RAID type as Synology names it, e.g. "SHR-1" or "RAID 5".
     pub raid: Option<String>,
+    /// "Btrfs" or "ext4".
+    pub file_system: Option<String>,
     pub total_bytes: u64,
     pub used_bytes: u64,
     pub health: Health,
+}
+
+/// A wired network port (`SYNO.Core.Network.Ethernet`).
+#[derive(Debug, Clone, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NetworkPort {
+    /// "eth0", "ovs_eth0" or a bond such as "bond0".
+    pub name: String,
+    pub connected: bool,
+    /// Speed of the current link in Mbit/s.
+    pub link_mbps: Option<u32>,
+    /// Highest speed the port supports in Mbit/s, when DSM says.
+    pub max_mbps: Option<u32>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
@@ -71,10 +86,17 @@ pub struct Overview {
     pub uptime_seconds: u64,
     pub temperature_c: Option<f64>,
     pub cpu_percent: f64,
+    /// e.g. "Intel Celeron J4125"; a Virtual DSM reports its host's processor.
+    pub cpu_model: Option<String>,
+    pub cpu_cores: Option<u32>,
+    pub cpu_clock_mhz: Option<u32>,
+    /// Microarchitecture, e.g. "Gemini Lake Refresh"; DSM does not report it.
+    pub cpu_architecture: Option<String>,
     pub memory_percent: f64,
     pub memory_bytes: u64,
     pub network_rx_bytes_per_second: f64,
     pub network_tx_bytes_per_second: f64,
+    pub network_ports: Vec<NetworkPort>,
     pub volumes: Vec<Volume>,
     pub drives: Vec<Drive>,
 }
@@ -118,6 +140,36 @@ fn uptime(value: &Value) -> u64 {
     value.as_u64().unwrap_or(0)
 }
 
+/// "INTEL", "Celeron", "J4125" → "Intel Celeron J4125". DSM writes some vendors in
+/// capitals; a word already in the family is not repeated.
+fn cpu_model(system: &Value) -> Option<String> {
+    let vendor = text(system, &["cpu_vendor"]).map(|vendor| {
+        if vendor.len() > 3 && vendor.chars().all(|c| c.is_ascii_uppercase()) {
+            let mut word = vendor.to_ascii_lowercase();
+            word[..1].make_ascii_uppercase();
+            word
+        } else {
+            vendor.to_owned()
+        }
+    });
+    let family = text(system, &["cpu_family"]);
+    let series = text(system, &["cpu_series"]);
+    let mut parts: Vec<String> = Vec::new();
+    if let Some(vendor) = vendor {
+        let repeated = family.is_some_and(|family| {
+            family
+                .to_ascii_lowercase()
+                .starts_with(&vendor.to_ascii_lowercase())
+        });
+        if !repeated {
+            parts.push(vendor);
+        }
+    }
+    parts.extend(family.map(str::to_owned));
+    parts.extend(series.map(str::to_owned));
+    (!parts.is_empty()).then(|| parts.join(" "))
+}
+
 /// "DSM 7.3.1-86003 Update 2" → "7.3.1-86003 Update 2".
 fn dsm_version(firmware: &str) -> String {
     firmware.strip_prefix("DSM ").unwrap_or(firmware).to_owned()
@@ -149,6 +201,40 @@ fn volume_number(volume: &Value) -> Option<u32> {
     digits.parse().ok()
 }
 
+/// "btrfs" → "Btrfs"; other names as DSM writes them ("ext4").
+fn file_system_name(name: &str) -> String {
+    match name.to_ascii_lowercase().as_str() {
+        "btrfs" => "Btrfs".into(),
+        _ => name.to_owned(),
+    }
+}
+
+/// Speeds arrive as numbers or strings in Mbit/s; DSM uses 0 or -1 for "unknown".
+fn mbps(value: &Value, keys: &[&str]) -> Option<u32> {
+    number(value, keys)
+        .filter(|speed| *speed > 0.0)
+        .map(|speed| speed as u32)
+}
+
+fn network_ports(ethernet: &Value) -> Vec<NetworkPort> {
+    ethernet
+        .as_array()
+        .or_else(|| ethernet["ethernets"].as_array())
+        .map(Vec::as_slice)
+        .unwrap_or_default()
+        .iter()
+        .filter_map(|port| {
+            let name = text(port, &["ifname", "id"])?.to_owned();
+            Some(NetworkPort {
+                connected: text(port, &["status"]).is_some_and(|status| status == "connected"),
+                link_mbps: mbps(port, &["speed"]),
+                max_mbps: mbps(port, &["max_supported_speed", "max_speed"]),
+                name,
+            })
+        })
+        .collect()
+}
+
 fn volumes(storage: &Value) -> Vec<Volume> {
     let pools = storage["storagePools"]
         .as_array()
@@ -178,6 +264,7 @@ fn volumes(storage: &Value) -> Vec<Volume> {
             raid: raid_of(volume),
             total_bytes: bytes(number(&volume["size"], &["total"])),
             used_bytes: bytes(number(&volume["size"], &["used"])),
+            file_system: text(volume, &["fs_type"]).map(file_system_name),
             health: Health::from_status(text(volume, &["status"])),
         })
         .collect()
@@ -224,7 +311,12 @@ fn drives(storage: &Value) -> Vec<Drive> {
 }
 
 impl Overview {
-    pub(crate) fn from_api(system: &Value, utilization: &Value, storage: &Value) -> Self {
+    pub(crate) fn from_api(
+        system: &Value,
+        utilization: &Value,
+        storage: &Value,
+        ethernet: &Value,
+    ) -> Self {
         let cpu = &utilization["cpu"];
         let cpu_percent = ["user_load", "system_load", "other_load"]
             .iter()
@@ -258,10 +350,17 @@ impl Overview {
             uptime_seconds: uptime(&system["up_time"]),
             temperature_c: number(system, &["sys_temp", "temperature"]).filter(|temp| *temp > 0.0),
             cpu_percent,
+            cpu_model: cpu_model(system),
+            cpu_cores: number(system, &["cpu_cores"]).map(|cores| cores as u32),
+            cpu_clock_mhz: number(system, &["cpu_clock_speed"]).map(|mhz| mhz as u32),
+            cpu_architecture: text(system, &["cpu_series"])
+                .and_then(crate::cpu::architecture)
+                .map(str::to_owned),
             memory_percent: number(memory, &["real_usage"]).unwrap_or(0.0),
             memory_bytes: bytes(memory_bytes),
             network_rx_bytes_per_second: rx.unwrap_or(0.0),
             network_tx_bytes_per_second: tx.unwrap_or(0.0),
+            network_ports: network_ports(ethernet),
             volumes: volumes(storage),
             drives: drives(storage),
         }
@@ -288,6 +387,7 @@ mod tests {
             &fixture("system-info.json"),
             &fixture("utilization.json"),
             &fixture("storage-load-info.json"),
+            &Value::Null,
         );
         assert_eq!(overview.model, "VirtualDSM");
         assert_eq!(overview.dsm, "7.4.1-90080");
@@ -302,6 +402,7 @@ mod tests {
         };
         assert_eq!(volume.number, Some(1));
         assert_eq!(volume.raid.as_deref(), Some("Basic"));
+        assert_eq!(volume.file_system.as_deref(), Some("Btrfs"));
         assert_eq!(volume.total_bytes, 412_310_568_960);
         assert_eq!(volume.used_bytes, 75_468_800);
         assert_eq!(volume.health, Health::Normal);
@@ -312,6 +413,18 @@ mod tests {
         assert_eq!(uptime(&json!("460:12:05")), 460 * 3600 + 12 * 60 + 5);
         assert_eq!(uptime(&json!(3600)), 3600);
         assert_eq!(uptime(&json!(null)), 0);
+    }
+
+    #[test]
+    fn cpu_model_reads_vendor_family_and_series() {
+        let intel =
+            json!({ "cpu_vendor": "INTEL", "cpu_family": "Celeron", "cpu_series": "J4125" });
+        assert_eq!(cpu_model(&intel).as_deref(), Some("Intel Celeron J4125"));
+        let amd = json!({ "cpu_vendor": "AMD", "cpu_family": "Ryzen", "cpu_series": "R1600" });
+        assert_eq!(cpu_model(&amd).as_deref(), Some("AMD Ryzen R1600"));
+        let repeated = json!({ "cpu_vendor": "Realtek", "cpu_family": "Realtek RTD1296" });
+        assert_eq!(cpu_model(&repeated).as_deref(), Some("Realtek RTD1296"));
+        assert_eq!(cpu_model(&json!({})), None);
     }
 
     #[test]
@@ -333,6 +446,8 @@ mod tests {
     fn builds_overview_from_lenient_answers() {
         let system = json!({
             "model": "DS923+", "firmware_ver": "DSM 7.3.1-86003", "ram_size": 32768,
+            "cpu_vendor": "AMD", "cpu_family": "Ryzen", "cpu_series": "R1600",
+            "cpu_cores": "2", "cpu_clock_speed": 2600,
             "up_time": "10:00:00", "sys_temp": 41
         });
         let utilization = json!({
@@ -353,11 +468,36 @@ mod tests {
                   "diskType": "M.2 NVMe" }
             ]
         });
-        let overview = Overview::from_api(&system, &utilization, &storage);
+        let ethernet = json!([
+            { "ifname": "eth0", "status": "connected", "speed": 2500, "max_supported_speed": "2500" },
+            { "ifname": "eth1", "status": "disconnected", "speed": -1 }
+        ]);
+        let overview = Overview::from_api(&system, &utilization, &storage, &ethernet);
         assert_eq!(overview.model, "DS923+");
         assert_eq!(overview.dsm, "7.3.1-86003");
         assert_eq!(overview.uptime_seconds, 36_000);
         assert_eq!(overview.cpu_percent, 12.0);
+        assert_eq!(overview.cpu_model.as_deref(), Some("AMD Ryzen R1600"));
+        assert_eq!(overview.cpu_cores, Some(2));
+        assert_eq!(overview.cpu_clock_mhz, Some(2600));
+        assert_eq!(overview.cpu_architecture.as_deref(), Some("Zen"));
+        assert_eq!(
+            overview.network_ports,
+            [
+                NetworkPort {
+                    name: "eth0".into(),
+                    connected: true,
+                    link_mbps: Some(2500),
+                    max_mbps: Some(2500),
+                },
+                NetworkPort {
+                    name: "eth1".into(),
+                    connected: false,
+                    link_mbps: None,
+                    max_mbps: None,
+                },
+            ]
+        );
         assert_eq!(overview.memory_bytes, 32 * 1024 * 1024 * 1024);
         assert_eq!(overview.network_rx_bytes_per_second, 3_400_000.0);
 
