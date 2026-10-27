@@ -253,7 +253,7 @@ async fn setup_creates_the_owner_before_locking_the_builtin_admin() {
         })
         .await
         .unwrap();
-    assert_eq!(done.session.sid, "owner-session");
+    assert_eq!(done.session.unwrap().sid, "owner-session");
     assert!(done.skipped.is_empty());
 
     let requests = server.received_requests().await.unwrap();
@@ -407,4 +407,44 @@ async fn identity_reads_server_name_and_model_and_tolerates_refusals() {
         Err(Error::PermissionDenied("SYNO.Core.Network".into()))
     );
     assert_eq!(model, Ok("VirtualDSM".to_owned()));
+}
+
+#[tokio::test]
+async fn setup_counts_as_done_when_the_first_sign_in_wants_a_code() {
+    let (server, client) = mock_nas().await;
+    Mock::given(path("/webapi/entry.cgi/SYNO.Entry.Request"))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(json!({ "success": true, "data": {
+                "has_fail": false,
+                "result": (0..7).map(|_| json!({ "success": true })).collect::<Vec<_>>()
+            }})),
+        )
+        .mount(&server)
+        .await;
+    Mock::given(path("/webapi/entry.cgi"))
+        .and(body_string_contains("method=login"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_json(json!({ "success": false, "error": { "code": 403 } })),
+        )
+        .mount(&server)
+        .await;
+
+    let done = client
+        .complete_setup(&SetupRequest {
+            device_name: "nas".into(),
+            account: "owner".into(),
+            password: "Secret-1234".into(),
+            time_zone: "Amsterdam".into(),
+            updates: UpdatePolicy::Important,
+            device_label: "test".into(),
+        })
+        .await
+        .unwrap();
+    assert!(done.session.is_none());
+    assert!(
+        done.skipped
+            .iter()
+            .any(|api| api == "SYNO.Core.QuickStart.Info")
+    );
 }

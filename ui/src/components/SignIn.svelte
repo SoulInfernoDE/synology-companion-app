@@ -155,7 +155,17 @@
 </script>
 
 {#if step === 'setup'}
-  <Setup {target} {trustFingerprint} {onconnected} {oncancel} />
+  <Setup
+    {target}
+    {trustFingerprint}
+    {onconnected}
+    {oncancel}
+    onsignin={(setUpAccount) => {
+      account = setUpAccount;
+      failure = { key: 'setup-sign-in' };
+      step = 'credentials';
+    }}
+  />
 {:else}
   <section class="card signin" aria-busy={busy || step === 'checking'}>
     <header>

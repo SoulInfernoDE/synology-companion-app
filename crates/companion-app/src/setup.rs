@@ -111,6 +111,9 @@ pub struct SetupFinished {
     device: KnownDevice,
     /// Optional settings DSM refused; the setup itself is done.
     skipped: Vec<String>,
+    /// False when DSM did not let the new account in right away (it asked for a
+    /// two-step code, for example); the user then signs in as usual.
+    signed_in: bool,
 }
 
 /// Sets the NAS up with the user's account and signs in with it.
@@ -142,7 +145,10 @@ pub async fn complete_setup(
         })
         .await?;
 
-    let (_, dsm_model) = identity(&pending.client, &done.session).await;
+    let dsm_model = match &done.session {
+        Some(session) => identity(&pending.client, session).await.1,
+        None => None,
+    };
     let device = KnownDevice {
         id,
         name: request.device_name.trim().to_owned(),
@@ -154,10 +160,22 @@ pub async fn complete_setup(
         remember_login: request.remember_login,
         mac: request.mac,
     };
+    let Some(session) = done.session else {
+        if let Ok(mut store) = state.store.lock() {
+            store
+                .upsert(device.clone())
+                .map_err(|error| Failure::new("storage", error.to_string()))?;
+        }
+        return Ok(SetupFinished {
+            device,
+            skipped: done.skipped,
+            signed_in: false,
+        });
+    };
     let device = activate(
         &state,
         pending.client,
-        done.session,
+        session,
         device,
         request.password,
         request.remember_login,
@@ -166,5 +184,6 @@ pub async fn complete_setup(
     Ok(SetupFinished {
         device,
         skipped: done.skipped,
+        signed_in: true,
     })
 }

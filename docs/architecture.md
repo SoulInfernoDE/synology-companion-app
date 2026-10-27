@@ -33,6 +33,7 @@
 | `crates/companion-app`       | Tauri app: windows, tray, commands                           |
 | `crates/companion-dsm`       | DSM Web API client with certificate pinning                  |
 | `crates/companion-discovery` | Finds NAS on the local network (Bonjour, Synology Assistant) |
+| `crates/companion-mockdsm`   | `mock-dsm`, a stand-in DSM to try the app without a NAS      |
 | `crates/companion-ssh`       | SSH, keys, sudo _(planned)_                                  |
 | `crates/companion-recipes`   | Recipe engine and journal _(planned)_                        |
 | `ui/`                        | User interface (Svelte 5, TypeScript, Vite)                  |

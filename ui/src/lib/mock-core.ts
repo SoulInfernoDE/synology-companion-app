@@ -137,7 +137,7 @@ async function completeSetup(request: CompleteSetupRequest) {
   };
   saved = [device, ...saved.filter((known) => known.id !== device.id)];
   open(device.id);
-  return { device, skipped: [] };
+  return { device, skipped: [], signedIn: true };
 }
 
 const commands: Record<string, (args: Record<string, unknown>) => Promise<unknown>> = {

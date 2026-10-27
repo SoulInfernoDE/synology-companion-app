@@ -278,3 +278,4 @@ settings-close-to-tray = Beim Schließen des Fensters im Tray weiterlaufen
 settings-close-to-tray-hint = Syno Companion behält das NAS weiter im Blick. Über das Tray-Symbol öffnest du es wieder.
 settings-notifications = Benachrichtigungen
 settings-notifications-hint = Bei Problemen mit Laufwerken und Volumes, wenn ein NAS nicht mehr antwortet und bei neuen DSM-Versionen.
+error-setup-sign-in = Das NAS ist eingerichtet. Melde dich mit deinem neuen Konto an.

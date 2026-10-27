@@ -83,7 +83,7 @@ npm install
 npm run app:dev
 ```
 
-`npm run dev` startet nur die Oberfläche im Browser, mit Demodaten statt eines NAS; `/?mock` ergänzt einen Ersatz für die Anmeldung ([Testumgebung](docs/test-environment.de.md)). `cargo test` führt die Tests der Rust-Crates aus.
+`npm run dev` startet nur die Oberfläche im Browser, mit Demodaten statt eines NAS; `/?mock` ergänzt einen Ersatz für die Anmeldung. `cargo run -p companion-mockdsm` startet einen nachgebauten DSM für die echte App ([Testumgebung](docs/test-environment.de.md)). `cargo test` führt die Tests der Rust-Crates aus.
 
 Mehr: [Architektur](docs/architecture.de.md) · [Testumgebung](docs/test-environment.de.md) · [Releases](docs/releasing.de.md) · [Roadmap](ROADMAP.de.md)
 

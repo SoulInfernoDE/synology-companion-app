@@ -30,7 +30,7 @@ Jede Version ist für sich nutzbar. Funktionen, die das NAS über DSMs eigene Ei
 - [x] Verfügbare DSM- und Paket-Updates
 - [ ] DSM- und Paket-Updates aus der App installieren
 - [x] Mehrere NAS nebeneinander: Wechsel in der Seitenleiste, einzeln trennen, Tray und Benachrichtigungen beobachten alle
-- [ ] Eigenständiger nachgebauter DSM-Server aus den aufgezeichneten Antworten, um die App ohne NAS auszuprobieren (die automatischen Tests nutzen sie schon)
+- [x] Eigenständiger nachgebauter DSM-Server aus den aufgezeichneten Antworten, um die App ohne NAS auszuprobieren, mit Bestätigung in zwei Schritten und Ersteinrichtung
 
 ## v0.3 – SSH
 

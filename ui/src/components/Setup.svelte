@@ -10,6 +10,7 @@
     toFailure,
     type Failure,
     type KnownDevice,
+    type SetupFinished,
     type SetupInfo,
     type TimeZone,
     type UpdatePolicy,
@@ -21,11 +22,14 @@
     trustFingerprint,
     onconnected,
     oncancel,
+    onsignin,
   }: {
     target: SignInTarget;
     trustFingerprint?: string;
     onconnected: (device: KnownDevice) => void;
     oncancel: () => void;
+    /** The NAS is set up, but the new account has to sign in as usual. */
+    onsignin: (account: string) => void;
   } = $props();
 
   type Step = 'intro' | 'form' | 'confirm' | 'running' | 'skipped';
@@ -42,7 +46,7 @@
   let timeZone = $state('');
   let updates = $state<UpdatePolicy>('important');
   let rememberLogin = $state(false);
-  let finished = $state<{ device: KnownDevice; skipped: string[] } | null>(null);
+  let finished = $state<SetupFinished | null>(null);
 
   /** DSM's own choice: the zone with the computer's standard-time offset, by city if possible. */
   function suggestZone(zones: TimeZone[]): string {
@@ -140,7 +144,8 @@
       });
       password = '';
       repeat = '';
-      if (finished.skipped.length === 0) onconnected(finished.device);
+      if (!finished.signedIn) onsignin(finished.device.account);
+      else if (finished.skipped.length === 0) onconnected(finished.device);
       else step = 'skipped';
     } catch (error) {
       failure = toFailure(error);

@@ -1,0 +1,24 @@
+[package]
+name = "companion-mockdsm"
+description = "A stand-in for the DSM Web API, to try Syno Companion without a NAS"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+publish = false
+
+[[bin]]
+name = "mock-dsm"
+path = "src/main.rs"
+
+[dependencies]
+rcgen = "0.14"
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+serde_json.workspace = true
+sha2 = "0.10"
+url = "2"
+
+[lints]
+workspace = true

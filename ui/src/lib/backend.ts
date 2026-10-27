@@ -118,6 +118,8 @@ export interface CompleteSetupRequest {
 export interface SetupFinished {
   device: KnownDevice;
   skipped: string[];
+  /** False when DSM did not let the new account in right away; sign in as usual. */
+  signedIn: boolean;
 }
 
 export interface DsmUpdate {

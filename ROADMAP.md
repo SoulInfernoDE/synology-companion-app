@@ -30,7 +30,7 @@ Each version is usable on its own. Features that change the NAS beyond DSM's own
 - [x] Available DSM and package updates
 - [ ] Install DSM and package updates from the app
 - [x] Several NAS side by side: switch in the sidebar, disconnect one, tray and notifications watch all
-- [ ] Standalone mock DSM server from the recorded answers, to try the app without a NAS (the automated tests already use them)
+- [x] Standalone mock DSM server from the recorded answers, to try the app without a NAS, with two-step verification and first-time setup
 
 ## v0.3 – SSH
 

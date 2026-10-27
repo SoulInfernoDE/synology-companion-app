@@ -278,3 +278,4 @@ settings-close-to-tray = Keep running in the tray when the window is closed
 settings-close-to-tray-hint = Syno Companion keeps watching the NAS. Open it again from the tray icon.
 settings-notifications = Notifications
 settings-notifications-hint = About drive and volume problems, a NAS that stops answering and new DSM versions.
+error-setup-sign-in = The NAS is set up. Sign in with your new account.

@@ -77,10 +77,12 @@ pub struct SetupRequest {
 }
 
 /// The result of a finished setup: a session of the new account, and the optional
-/// settings DSM refused (the setup itself still counts as done).
+/// settings DSM refused (the setup itself still counts as done). Without a session
+/// (DSM wanted a two-step code right away, for example) the user signs in as usual
+/// and the optional settings are all skipped.
 #[derive(Debug, Clone)]
 pub struct SetupDone {
-    pub session: Session,
+    pub session: Option<Session>,
     pub skipped: Vec<String>,
 }
 
@@ -319,7 +321,7 @@ impl Client {
                 device_name: request.device_label.clone(),
                 ..Credentials::default()
             })
-            .await?;
+            .await;
 
         let mut optional = request.updates.requests().to_vec();
         optional.extend([
@@ -343,13 +345,32 @@ impl Client {
                 json!({ "welcome_upgrade_step": false }),
             ),
         ]);
-        let results = self.compound(Some(&session.sid), false, &optional).await?;
-        let skipped = results
-            .iter()
-            .filter(|result| result["success"] != true)
-            .filter_map(|result| result["api"].as_str().map(str::to_owned))
-            .collect();
-        Ok(SetupDone { session, skipped })
+        let names = |calls: &[Value]| -> Vec<String> {
+            calls
+                .iter()
+                .filter_map(|call| call["api"].as_str().map(str::to_owned))
+                .collect()
+        };
+        // The setup is done either way: from here on the NAS no longer hands out
+        // its setup session, so failing now would leave the user without a way back.
+        let Ok(session) = session else {
+            return Ok(SetupDone {
+                session: None,
+                skipped: names(&optional),
+            });
+        };
+        let skipped = match self.compound(Some(&session.sid), false, &optional).await {
+            Ok(results) => results
+                .iter()
+                .filter(|result| result["success"] != true)
+                .filter_map(|result| result["api"].as_str().map(str::to_owned))
+                .collect(),
+            Err(_) => names(&optional),
+        };
+        Ok(SetupDone {
+            session: Some(session),
+            skipped,
+        })
     }
 }
 

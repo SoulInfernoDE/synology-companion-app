@@ -10,9 +10,17 @@ Syno Companion wird entwickelt und getestet, **ohne ein produktives NAS anzufass
 
 Mit `/?mock` in der Adresse (`http://localhost:5174/?mock`) läuft im Browser ein Ersatz für den Rust-Kern, sodass sich der ganze Anmeldeablauf durchspielen lässt: Er findet ein NAS, zeigt ein unbekanntes Zertifikat, nimmt das Passwort `demo` und jeden 6-stelligen Code an. Er gehört nur zu `npm run dev`, nie zu einem Release.
 
-## 2. Nachgebauter DSM-Server (automatische Tests)
+## 2. Nachgebauter DSM-Server (die echte App ohne NAS)
 
-Ein kleiner Server beantwortet Aufrufe der DSM-Web-API mit Antworten, die von einem echten DSM aufgezeichnet wurden (ohne persönliche Daten). Unit- und Integrationstests des DSM-Clients laufen in der CI dagegen. Neue Antworten werden an einem virtuellen DSM aufgezeichnet, nie an einem produktiven NAS.
+`mock-dsm` beantwortet die DSM-Web-API wie ein NAS: mit den von einem Virtual DSM 7.4.1 aufgezeichneten Antworten (ohne persönliche Daten) und Beispieldaten für das, was einem virtuellen NAS fehlt, etwa Laufwerke, Temperatur und Updates. Er liefert HTTPS mit einem frischen selbstsignierten Zertifikat, sodass die Zertifikatsprüfung der App wie bei einem echten DSM läuft.
+
+```bash
+cargo run -p companion-mockdsm -- --otp --unconfigured
+```
+
+Er zeigt seine Adresse (standardmäßig `https://127.0.0.1:15001`, `--port` ändert sie) und den Fingerabdruck des Zertifikats. Die Adresse in der App eingeben und mit `demo` / `demo` anmelden; mit `--otp` braucht dieses Konto den Code `123456`. Mit `--unconfigured` verhält er sich wie ein NAS, dessen Willkommensassistent noch nicht gelaufen ist, sodass sich die Ersteinrichtung ausprobieren lässt; das dort angelegte Konto meldet sich danach an. Neustart, Herunterfahren und Piepton antworten nur mit „erledigt“.
+
+Die automatischen Tests des DSM-Clients nutzen dieselben aufgezeichneten Antworten. Neue Antworten werden an einem virtuellen DSM aufgezeichnet, nie an einem produktiven NAS.
 
 ## 3. Virtuelles DSM (realistische Tests)
 
