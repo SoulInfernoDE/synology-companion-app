@@ -13,7 +13,7 @@
 
 It is made for **regular users without shell experience**. Everything that touches the system beyond what DSM offers sits behind an **expert mode**, shows the exact commands before it runs them, makes a backup first and can be undone.
 
-> **Status: everything planned for 1.0 is on the main branch; the latest published release is 0.2.** The basics are tested against a Virtual DSM; packages, containers, recipes and Nextcloud are tested against a stand-in DSM and still need testing on real hardware. Downloads: [releases](https://github.com/SoulInfernoDE/synology-companion-app/releases). See the [roadmap](ROADMAP.md).
+> **Status: version 1.0 is released.** The basics are tested against a Virtual DSM; packages, containers, recipes and Nextcloud are tested against a stand-in DSM and still need testing on real hardware. Downloads: [releases](https://github.com/SoulInfernoDE/synology-companion-app/releases). See the [roadmap](ROADMAP.md).
 >
 > Syno Companion is an independent community project. It is not affiliated with, endorsed by or supported by Synology Inc. "Synology" and "DSM" are trademarks of Synology Inc.
 

@@ -13,7 +13,7 @@
 
 Sie ist für **normale Benutzer ohne Shell-Erfahrung** gedacht. Alles, was über DSM hinaus ins System eingreift, liegt hinter einem **Expertenmodus**, zeigt vorher die genauen Befehle, legt zuerst eine Sicherung an und lässt sich rückgängig machen.
 
-> **Stand: Alles für 1.0 Geplante ist im Hauptzweig; das zuletzt veröffentlichte Release ist 0.2.** Die Grundlagen sind an einem Virtual DSM getestet; Pakete, Container, Rezepte und Nextcloud sind gegen ein Ersatz-DSM getestet und müssen noch an echter Hardware geprüft werden. Downloads: [Releases](https://github.com/SoulInfernoDE/synology-companion-app/releases). Siehe [Roadmap](ROADMAP.de.md).
+> **Stand: Version 1.0 ist veröffentlicht.** Die Grundlagen sind an einem Virtual DSM getestet; Pakete, Container, Rezepte und Nextcloud sind gegen ein Ersatz-DSM getestet und müssen noch an echter Hardware geprüft werden. Downloads: [Releases](https://github.com/SoulInfernoDE/synology-companion-app/releases). Siehe [Roadmap](ROADMAP.de.md).
 >
 > Syno Companion ist ein unabhängiges Community-Projekt. Es steht in keiner Verbindung zu Synology Inc. und wird von Synology weder unterstützt noch empfohlen. „Synology“ und „DSM“ sind Marken der Synology Inc.
 

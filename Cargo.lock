@@ -750,7 +750,7 @@ dependencies = [
 
 [[package]]
 name = "companion-app"
-version = "0.2.0"
+version = "1.0.0"
 dependencies = [
  "companion-discovery",
  "companion-dsm",
@@ -775,7 +775,7 @@ dependencies = [
 
 [[package]]
 name = "companion-discovery"
-version = "0.2.0"
+version = "1.0.0"
 dependencies = [
  "mdns-sd",
  "serde",
@@ -784,7 +784,7 @@ dependencies = [
 
 [[package]]
 name = "companion-dsm"
-version = "0.2.0"
+version = "1.0.0"
 dependencies = [
  "rcgen",
  "reqwest",
@@ -802,7 +802,7 @@ dependencies = [
 
 [[package]]
 name = "companion-mockdsm"
-version = "0.2.0"
+version = "1.0.0"
 dependencies = [
  "rcgen",
  "rustls",
@@ -813,7 +813,7 @@ dependencies = [
 
 [[package]]
 name = "companion-nextcloud"
-version = "0.2.0"
+version = "1.0.0"
 dependencies = [
  "companion-ssh",
  "serde",
@@ -823,7 +823,7 @@ dependencies = [
 
 [[package]]
 name = "companion-recipes"
-version = "0.2.0"
+version = "1.0.0"
 dependencies = [
  "companion-ssh",
  "serde",
@@ -835,7 +835,7 @@ dependencies = [
 
 [[package]]
 name = "companion-ssh"
-version = "0.2.0"
+version = "1.0.0"
 dependencies = [
  "ring",
  "russh",
