@@ -13,7 +13,7 @@
 
 Sie ist für **normale Benutzer ohne Shell-Erfahrung** gedacht. Alles, was über DSM hinaus ins System eingreift, liegt hinter einem **Expertenmodus**, zeigt vorher die genauen Befehle, legt zuerst eine Sicherung an und lässt sich rückgängig machen.
 
-> **Stand: Pre-Alpha, Version 0.1.** NAS finden, Ersteinrichtung, Anmeldung (mit 2FA und Zertifikatsprüfung) und Übersicht funktionieren und sind an einem Virtual DSM 7.4.1 getestet. Downloads: [Releases](https://github.com/SoulInfernoDE/synology-companion-app/releases). Siehe [Roadmap](ROADMAP.de.md).
+> **Stand: Pre-Alpha, Version 0.2.** NAS finden, Ersteinrichtung, Anmeldung (mit 2FA und Zertifikatsprüfung), Übersicht mit Updates, Neustart und Herunterfahren, Freigaben, Wake-on-LAN, Benachrichtigungen im Tray und mehrere NAS nebeneinander funktionieren; die Grundlagen sind an einem Virtual DSM 7.4.1 getestet. Downloads: [Releases](https://github.com/SoulInfernoDE/synology-companion-app/releases). Siehe [Roadmap](ROADMAP.de.md).
 >
 > Syno Companion ist ein unabhängiges Community-Projekt. Es steht in keiner Verbindung zu Synology Inc. und wird von Synology weder unterstützt noch empfohlen. „Synology“ und „DSM“ sind Marken der Synology Inc.
 
