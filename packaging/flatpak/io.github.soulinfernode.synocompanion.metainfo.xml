@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.soulinfernode.synocompanion</id>
+  <name>Syno Companion</name>
+  <summary>Desktop companion for Synology NAS</summary>
+  <summary xml:lang="de">Desktop-Begleiter für Synology-NAS</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <developer id="io.github.soulinfernode">
+    <name>Syno Companion contributors</name>
+  </developer>
+  <description>
+    <p>Syno Companion finds your Synology NAS on the network, signs in with two-step verification and shows its state, updates and shared folders. Over SSH with a key it installs packages from Synology and community sources, updates containers and Nextcloud and runs proven community scripts with backups and a journal.</p>
+    <p xml:lang="de">Syno Companion findet dein Synology-NAS im Netzwerk, meldet sich mit zweistufiger Bestätigung an und zeigt Zustand, Updates und Freigaben. Über SSH mit Schlüssel installiert es Pakete von Synology und aus Community-Quellen, aktualisiert Container und Nextcloud und führt bewährte Community-Skripte mit Sicherung und Journal aus.</p>
+    <p>An independent community project, not affiliated with Synology Inc.</p>
+    <p xml:lang="de">Ein unabhängiges Community-Projekt ohne Verbindung zu Synology Inc.</p>
+  </description>
+  <launchable type="desktop-id">io.github.soulinfernode.synocompanion.desktop</launchable>
+  <url type="homepage">https://github.com/SoulInfernoDE/synology-companion-app</url>
+  <url type="bugtracker">https://github.com/SoulInfernoDE/synology-companion-app/issues</url>
+  <categories>
+    <category>Network</category>
+    <category>System</category>
+  </categories>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="0.2.0" date="2026-10-27"/>
+  </releases>
+</component>

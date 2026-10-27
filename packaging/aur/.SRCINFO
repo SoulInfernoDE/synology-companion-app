@@ -1,0 +1,21 @@
+pkgbase = syno-companion-bin
+	pkgdesc = Desktop companion for Synology NAS
+	pkgver = 0.2.0
+	pkgrel = 1
+	url = https://github.com/SoulInfernoDE/synology-companion-app
+	arch = x86_64
+	arch = aarch64
+	license = GPL-3.0-or-later
+	depends = webkit2gtk-4.1
+	depends = gtk3
+	depends = libayatana-appindicator
+	optdepends = gnome-keyring: keychain for passwords and SSH keys
+	optdepends = kwallet: keychain for passwords and SSH keys on KDE
+	provides = syno-companion
+	conflicts = syno-companion
+	source_x86_64 = https://github.com/SoulInfernoDE/synology-companion-app/releases/download/v0.2.0/syno-companion_0.2.0_amd64.deb
+	sha256sums_x86_64 = a8b03784f5b57e736fb2e7ad690caf789c397de5bceb795cc4a1cfbc72893f0b
+	source_aarch64 = https://github.com/SoulInfernoDE/synology-companion-app/releases/download/v0.2.0/syno-companion_0.2.0_arm64.deb
+	sha256sums_aarch64 = 9d5b5cc017b15259239bdf3d72b2e407ebf0b96389445f931a2b37723bd14765
+
+pkgname = syno-companion-bin

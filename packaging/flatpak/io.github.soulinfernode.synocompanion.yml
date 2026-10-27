@@ -1,0 +1,84 @@
+# Flatpak of Syno Companion, built from the .deb of a GitHub release.
+# tools/update-packaging.mjs sets the version and checksums after a release.
+app-id: io.github.soulinfernode.synocompanion
+runtime: org.gnome.Platform
+runtime-version: '49'
+sdk: org.gnome.Sdk
+command: syno-companion
+finish-args:
+  - --share=ipc
+  - --share=network
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+  # Passwords, device tokens and SSH keys are kept in the system keychain.
+  - --talk-name=org.freedesktop.secrets
+  # Tray icon and notifications.
+  - --talk-name=org.kde.StatusNotifierWatcher
+  - --talk-name=org.freedesktop.Notifications
+modules:
+  - name: libayatana-appindicator
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DENABLE_BINDINGS_MONO=NO
+      - -DENABLE_BINDINGS_VALA=NO
+      - -DENABLE_GTKDOC=NO
+    sources:
+      - type: git
+        url: https://github.com/AyatanaIndicators/libayatana-appindicator.git
+        tag: 0.5.94
+        commit: 31e8bb083b307e1cc96af4874a94707727bd1e79
+    modules:
+      - name: libayatana-ido
+        buildsystem: cmake-ninja
+        sources:
+          - type: git
+            url: https://github.com/AyatanaIndicators/ayatana-ido.git
+            tag: 0.10.4
+            commit: f968079b09e2310fefc3fc307359025f1c74b3eb
+      - name: libayatana-indicator
+        buildsystem: cmake-ninja
+        sources:
+          - type: git
+            url: https://github.com/AyatanaIndicators/libayatana-indicator.git
+            tag: 0.9.4
+            commit: 611bb384b73fa6311777ba4c41381a06f5b99dad
+      - name: libdbusmenu-gtk3
+        buildsystem: autotools
+        build-options:
+          cflags: -Wno-error
+        config-opts:
+          - --with-gtk=3
+          - --disable-dumper
+          - --disable-static
+          - --disable-tests
+          - --disable-gtk-doc
+          - --enable-introspection=no
+          - --disable-vala
+        sources:
+          - type: archive
+            url: https://launchpad.net/libdbusmenu/16.04/16.04.0/+download/libdbusmenu-16.04.0.tar.gz
+            sha256: b9cc4a2acd74509435892823607d966d424bd9ad5d0b00938f27240a1bfa878a
+  - name: syno-companion
+    buildsystem: simple
+    sources:
+      - type: file
+        dest-filename: syno-companion.deb
+        only-arches: [x86_64]
+        url: https://github.com/SoulInfernoDE/synology-companion-app/releases/download/v0.2.0/syno-companion_0.2.0_amd64.deb
+        sha256: a8b03784f5b57e736fb2e7ad690caf789c397de5bceb795cc4a1cfbc72893f0b
+      - type: file
+        dest-filename: syno-companion.deb
+        only-arches: [aarch64]
+        url: https://github.com/SoulInfernoDE/synology-companion-app/releases/download/v0.2.0/syno-companion_0.2.0_arm64.deb
+        sha256: 9d5b5cc017b15259239bdf3d72b2e407ebf0b96389445f931a2b37723bd14765
+      - type: file
+        path: io.github.soulinfernode.synocompanion.metainfo.xml
+    build-commands:
+      - ar -x syno-companion.deb
+      - tar -xf data.tar.*
+      - install -Dm755 usr/bin/syno-companion /app/bin/syno-companion
+      - install -Dm644 usr/share/applications/*.desktop /app/share/applications/io.github.soulinfernode.synocompanion.desktop
+      - desktop-file-edit --set-icon=io.github.soulinfernode.synocompanion /app/share/applications/io.github.soulinfernode.synocompanion.desktop
+      - for size in 32x32 128x128 512x512; do install -Dm644 usr/share/icons/hicolor/$size/apps/syno-companion.png /app/share/icons/hicolor/$size/apps/io.github.soulinfernode.synocompanion.png; done
+      - install -Dm644 io.github.soulinfernode.synocompanion.metainfo.xml /app/share/metainfo/io.github.soulinfernode.synocompanion.metainfo.xml

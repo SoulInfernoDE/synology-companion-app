@@ -61,7 +61,8 @@ Jede Version ist für sich nutzbar. Funktionen, die das NAS über DSMs eigene Ei
 - [x] Nextcloud-Tab: Installation erkennen (Web Station, PHP-Version, Datenbank, Redis)
 - [x] Kompatibilitätsprüfung: PHP-Version gegen die Grenzen des nächsten Nextcloud-Releases (aus dessen `lib/versioncheck.php`); MariaDB- und Redis-Versionen werden angezeigt
 - [x] Geführtes Update: Datenbank-Dump, Wartungsmodus, Rechte öffnen, Updater, `occ upgrade`, `occ db:add-missing-indices`, Rechte schließen, Wartungsmodus aus; jeder Schritt sichtbar und fortsetzbar. Einen Snapshot legt die App nicht selbst an; sie empfiehlt ihn vorher in Snapshot Replication.
-- [ ] Signierte Pakete (Windows, macOS-Notarisierung), Flatpak, AUR
+- [x] Paketierung vorbereitet: optionales Signieren im Release-Workflow (Windows-Zertifikat, macOS-Signatur und Notarisierung), Flatpak-Manifest, AUR-Paket
+- [ ] Signierte Pakete veröffentlichen, auf Flathub und im AUR (braucht Zertifikate und Konten des Maintainers)
 - [x] Download Station: Aufgaben mit Fortschritt anzeigen, Links hinzufügen (HTTP, HTTPS, FTP, Magnet), anhalten, fortsetzen, entfernen
 
 ## v2.0 – Web Station

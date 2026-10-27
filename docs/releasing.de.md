@@ -28,8 +28,25 @@ Jedes Release enthält außerdem `SHA256SUMS.txt`. Versionen vor 1.0 und Tags mi
 
 Ein manueller Lauf des Workflows (_Actions › Release › Run workflow_) baut alle Pakete und behält sie als Workflow-Artefakte, ohne etwas zu veröffentlichen; gedacht zum Testen von Änderungen an der Paketierung.
 
+5. Flatpak und AUR auf das Release umstellen (siehe unten) und das Ergebnis committen.
+
+## Signieren
+
+Der Release-Workflow signiert, wenn diese Repository-Secrets existieren, und baut sonst unsignierte Pakete:
+
+- **macOS** (Signieren und Notarisieren durch Tauri): `APPLE_CERTIFICATE` (das Developer-ID-Application-Zertifikat als Base64-`.p12`), `APPLE_CERTIFICATE_PASSWORD`, `APPLE_SIGNING_IDENTITY` (zum Beispiel `Developer ID Application: Name (TEAMID)`) und zum Notarisieren `APPLE_ID`, `APPLE_PASSWORD` (ein app-spezifisches Passwort) und `APPLE_TEAM_ID`. Dafür ist ein kostenpflichtiges Apple-Developer-Konto nötig.
+- **Windows:** `WINDOWS_CERTIFICATE` (ein Code-Signing-Zertifikat als Base64-`.pfx`) und `WINDOWS_CERTIFICATE_PASSWORD`. Der Workflow importiert es und gibt seinen Fingerabdruck an Tauri, das `.msi` und Setup mit SHA-256-Zeitstempel signiert.
+
+## Flatpak und AUR
+
+Beide werden aus den `.deb`-Dateien eines GitHub-Releases gebaut und folgen damit einem Release:
+
+```bash
+node tools/update-packaging.mjs 0.3.0
+```
+
+setzt Version und Prüfsummen in `packaging/flatpak/` und `packaging/aur/`. Das Flatpak-Manifest baut mit `flatpak-builder --user --install build packaging/flatpak/io.github.soulinfernode.synocompanion.yml`; es bringt die AppIndicator-Bibliotheken für das Tray-Icon mit und fragt nach dem Secret Service (Schlüsselbund), Benachrichtigungen und dem Tray. Für Flathub kommt das Manifest dort in ein eigenes Repository; für das AUR werden `PKGBUILD` und `.SRCINFO` in das Paket `syno-companion-bin` gepusht. Beides braucht ein Konto des Maintainers.
+
 ## Noch nicht
 
-- **Signieren:** macOS-Builds sind nicht notarisiert und Windows-Installer nicht signiert, deshalb warnen Gatekeeper und SmartScreen beim ersten Start. Geplant für 1.0 ([Roadmap](../ROADMAP.de.md)).
-- **Flatpak und AUR:** geplant für 1.0.
 - **Automatische Updates:** geplant, sobald Releases signiert sind.

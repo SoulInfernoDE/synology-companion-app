@@ -28,8 +28,25 @@ Every release also carries `SHA256SUMS.txt`. Versions before 1.0 and tags with `
 
 A manual run of the workflow (_Actions › Release › Run workflow_) builds all packages and keeps them as workflow artifacts without publishing anything; use it to test packaging changes.
 
+5. Point Flatpak and AUR at the release (see below) and commit the result.
+
+## Signing
+
+The release workflow signs when these repository secrets exist and builds unsigned packages otherwise:
+
+- **macOS** (signing and notarisation by Tauri): `APPLE_CERTIFICATE` (the Developer ID Application certificate as base64 `.p12`), `APPLE_CERTIFICATE_PASSWORD`, `APPLE_SIGNING_IDENTITY` (for example `Developer ID Application: Name (TEAMID)`), and for notarisation `APPLE_ID`, `APPLE_PASSWORD` (an app-specific password) and `APPLE_TEAM_ID`. This needs a paid Apple Developer account.
+- **Windows:** `WINDOWS_CERTIFICATE` (a code signing certificate as base64 `.pfx`) and `WINDOWS_CERTIFICATE_PASSWORD`. The workflow imports it and passes its thumbprint to Tauri, which signs the `.msi` and the setup with a SHA-256 timestamp.
+
+## Flatpak and AUR
+
+Both are built from the `.deb` files of a GitHub release, so they follow a release:
+
+```bash
+node tools/update-packaging.mjs 0.3.0
+```
+
+sets version and checksums in `packaging/flatpak/` and `packaging/aur/`. The Flatpak manifest builds with `flatpak-builder --user --install build packaging/flatpak/io.github.soulinfernode.synocompanion.yml`; it adds the AppIndicator libraries for the tray icon and asks for the Secret Service (keychain), notifications and the tray. For Flathub the manifest goes into a repository of its own there; for the AUR, `PKGBUILD` and `.SRCINFO` are pushed to the `syno-companion-bin` package. Both need an account of the maintainer.
+
 ## Not yet
 
-- **Signing:** macOS builds are not notarised and Windows installers are not signed, so Gatekeeper and SmartScreen warn on first start. Planned for 1.0 ([roadmap](../ROADMAP.md)).
-- **Flatpak and AUR:** planned for 1.0.
 - **Automatic updates:** planned once releases are signed.

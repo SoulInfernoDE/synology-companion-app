@@ -85,6 +85,52 @@ jobs:
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           key: ${{ matrix.name }}
+      # Signing happens only when its secrets are set; without them the
+      # packages are built unsigned, as before.
+      - name: Prepare macOS signing and notarisation
+        if: runner.os == 'macOS'
+        shell: bash
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set -euo pipefail
+          if [ -z "$APPLE_CERTIFICATE" ]; then
+            echo "No signing certificate: the app stays unsigned."
+            exit 0
+          fi
+          # Tauri signs and notarises when these are in the environment of the build.
+          for name in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID; do
+            value="${!name}"
+            [ -n "$value" ] || continue
+            { echo "$name<<END_OF_VALUE"; echo "$value"; echo "END_OF_VALUE"; } >> "$GITHUB_ENV"
+          done
+      - name: Prepare Windows signing
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        run: |
+          if (-not $env:WINDOWS_CERTIFICATE) {
+            Write-Host "No signing certificate: the installers stay unsigned."
+            exit 0
+          }
+          $pfx = Join-Path $env:RUNNER_TEMP 'certificate.pfx'
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE))
+          $password = ConvertTo-SecureString -String $env:WINDOWS_CERTIFICATE_PASSWORD -Force -AsPlainText
+          $certificate = Import-PfxCertificate -FilePath $pfx -CertStoreLocation Cert:\CurrentUser\My -Password $password
+          Remove-Item $pfx
+          $config = @{ bundle = @{ windows = @{
+            certificateThumbprint = $certificate.Thumbprint
+            digestAlgorithm = 'sha256'
+            timestampUrl = 'http://timestamp.digicert.com'
+          } } } | ConvertTo-Json -Compress -Depth 5
+          "TAURI_SIGN_CONFIG=$config" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
       - name: Build packages
         shell: bash
         env:
@@ -96,6 +142,7 @@ jobs:
           set -euo pipefail
           args=(--bundles "$BUNDLES")
           if [ -n "$TARGET" ]; then args+=(--target "$TARGET"); fi
+          if [ -n "${TAURI_SIGN_CONFIG:-}" ]; then args+=(--config "$TAURI_SIGN_CONFIG"); fi
           npm run app:build -- "${args[@]}"
       - name: Collect packages
         shell: bash
