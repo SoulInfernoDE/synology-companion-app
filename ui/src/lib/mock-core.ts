@@ -18,7 +18,14 @@ import type {
   SetupInfo,
   TerminalEvent,
 } from './backend';
-import { demoDiagnostics, demoMemory, demoOverview, demoShares, demoUpdates } from './nas';
+import {
+  demoDiagnostics,
+  demoMemory,
+  demoOverview,
+  demoPackages,
+  demoShares,
+  demoUpdates,
+} from './nas';
 
 const FINGERPRINT = Array.from({ length: 32 }, (_, i) =>
   ((i * 37 + 11) % 256).toString(16).padStart(2, '0'),
@@ -145,6 +152,8 @@ async function completeSetup(request: CompleteSetupRequest) {
 }
 
 let sshEnabled = false;
+let mockPackages = demoPackages;
+let mockSources = { feeds: [] as { name: string; url: string }[], trustLevel: 0 };
 let terminalOutput: ((text: string) => void) | null = null;
 const HOST_KEY = 'SHA256:mOcKhOsTkEyFoRtHePrEvIeWoNlY0123456789abcd';
 
@@ -229,6 +238,32 @@ const commands: Record<string, (args: Record<string, unknown>) => Promise<unknow
   terminal_resize: async () => undefined,
   terminal_close: async () => {
     terminalOutput = null;
+  },
+  packages: async () => (await wait(600), mockPackages),
+  package_sources: async () => mockSources,
+  add_package_source: async (args) => {
+    await wait(500);
+    if (!String(args.url).startsWith('https://')) throw { key: 'feed-invalid' };
+    mockSources = {
+      feeds: [...mockSources.feeds, { name: String(args.name), url: String(args.url) }],
+      trustLevel: args.trust ? Math.max(1, mockSources.trustLevel) : mockSources.trustLevel,
+    };
+    return mockSources;
+  },
+  remove_package_source: async (args) => {
+    mockSources = { ...mockSources, feeds: mockSources.feeds.filter((f) => f.url !== args.url) };
+    return mockSources;
+  },
+  install_package: async (args) => {
+    await wait(1200);
+    if (args.password === undefined) throw { key: 'password-required' };
+    if (args.password !== 'demo') throw { key: 'sudo' };
+    const pkg = mockPackages.find((known) => known.id === args.id);
+    if (!pkg) throw { key: 'package-unavailable', detail: String(args.id) };
+    mockPackages = mockPackages.map((known) =>
+      known.id === pkg.id ? { ...known, installed: known.available, status: 'running' } : known,
+    );
+    return [pkg.name];
   },
   forget_device: async (args) => {
     saved = saved.filter((device) => device.id !== args.id);

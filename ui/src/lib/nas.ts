@@ -1,7 +1,7 @@
 // What the interface knows about a NAS. The Rust core fills these from the DSM Web API;
 // in demo mode they come from `demoOverview`.
 
-import type { Diagnostics, MemoryModule, Shares, Updates } from './backend';
+import type { Diagnostics, MemoryModule, Package, Shares, Updates } from './backend';
 
 export type Health = 'normal' | 'warning' | 'critical';
 
@@ -217,5 +217,60 @@ export const demoMemory: MemoryModule[] = [
     speed: 2666,
     manufacturer: 'Crucial',
     partNumber: 'CT16G4SFRA266',
+  },
+];
+
+const synologyPackage = (
+  id: string,
+  name: string,
+  description: string,
+  installed: string | null,
+  available: string,
+): Package => ({
+  id,
+  name,
+  description,
+  installed,
+  available,
+  publisher: null,
+  status: installed ? 'running' : null,
+  beta: false,
+  system: false,
+  depends: [],
+  download: null,
+});
+
+export const demoPackages: Package[] = [
+  synologyPackage(
+    'ContainerManager',
+    'Container Manager',
+    'Run containers and Compose projects on your NAS.',
+    '24.0.2-1535',
+    '24.0.2-1606',
+  ),
+  synologyPackage(
+    'HyperBackup',
+    'Hyper Backup',
+    'Back up data to local shares, other NAS and cloud storage.',
+    '4.1.2-4031',
+    '4.1.2-4031',
+  ),
+  synologyPackage(
+    'SynologyPhotos',
+    'Synology Photos',
+    'Organise and share photos and videos.',
+    '1.7.1-10015',
+    '1.8.1-10089',
+  ),
+  synologyPackage('TextEditor', 'Text Editor', 'Edit text files on the NAS.', null, '1.2.5-0254'),
+  {
+    ...synologyPackage(
+      'synocli-file',
+      'SynoCli File Tools',
+      'Command-line tools such as nano, less and tree.',
+      null,
+      '4.0.3-32',
+    ),
+    publisher: 'SynoCommunity',
   },
 ];

@@ -7,6 +7,7 @@
 mod cpu;
 mod manage;
 mod overview;
+mod packages;
 mod setup;
 pub mod tls;
 
@@ -19,6 +20,7 @@ use url::Url;
 
 pub use manage::{DsmUpdate, PackageUpdate, Share, Shares, SshService, Updates};
 pub use overview::{Drive, DriveKind, Health, NetworkPort, Overview, Volume};
+pub use packages::{Download, Feed, Package, PackageSources};
 pub use setup::{
     PasswordRules, SetupDone, SetupInfo, SetupRequest, SetupState, TimeZone, UpdatePolicy,
 };
@@ -35,7 +37,9 @@ const APIS: &[&str] = &[
     "SYNO.Core.Network",
     "SYNO.Core.Network.Ethernet",
     "SYNO.Core.Package",
+    "SYNO.Core.Package.Feed",
     "SYNO.Core.Package.Server",
+    "SYNO.Core.Package.Setting",
     "SYNO.Core.Share",
     "SYNO.Core.System",
     "SYNO.Core.System.Utilization",

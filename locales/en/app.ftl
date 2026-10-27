@@ -89,7 +89,6 @@ drive-nvme = NVMe SSD
 ## Planned sections
 
 planned-version = Planned for version { $version }
-planned-packages = Add community package sources such as SynoCommunity, then browse and install their packages.
 planned-extensions = Community scripts as safe recipes: see every command first, back up, apply, undo. Third-party drives come first.
 planned-nextcloud = Update Nextcloud in one guided run: check PHP, MariaDB and Redis, take a snapshot, run the updater, close the permissions again.
 
@@ -338,3 +337,40 @@ error-ssh-no-home = Your account has no home folder on the NAS. Turn on the user
 error-ssh-failed = The SSH command failed.
 error-password-required = The password is needed for this.
 error-sudo = sudo refused the password.
+
+## Packages
+
+packages-intro = Install and update packages, from Synology and from package sources such as SynoCommunity. Installing runs as root over SSH.
+packages-installed = Installed
+packages-catalogue = Catalogue
+packages-sources = Sources
+packages-needs-ssh = Installing and updating needs SSH with a key.
+packages-set-up-ssh = Set up SSH
+packages-password-title = Password for sudo to install { $name }
+packages-password-text = Installing runs as root. The password goes to sudo on the NAS and nowhere else.
+packages-install = Install
+packages-installing = Installing…
+packages-update = Update
+packages-updating = Updating…
+packages-update-all = Update all ({ $count })
+packages-done = Done: { $names }
+packages-stopped = stopped
+packages-needs = needs { $names }
+packages-none = No packages installed.
+packages-search = Search packages
+packages-no-match = No package matches.
+packages-wizard-hint = Packages that ask questions while installing (a shared folder, a port) take their defaults; change them in DSM afterwards or install them in Package Center.
+packages-sources-warning = Packages of other sources are not checked by Synology and run with the rights of a package on your NAS. Only add sources you trust.
+packages-sources-none = No package sources added.
+packages-synocommunity-text = Free community packages such as SynoCli, Jellyfin, Transmission and many tools. Maintained by volunteers on GitHub.
+packages-source-add = Add
+packages-source-remove = Remove
+packages-source-other = Another source
+packages-source-name = Name
+packages-trust = Allow packages of trusted publishers
+packages-trust-hint = Package Center then accepts packages whose publisher certificate it trusts, which it does for every added source. Needed for SynoCommunity.
+packages-demo = Sample data: nothing is installed in the demo.
+error-feed-invalid = DSM cannot read a package list at this address.
+error-package-unavailable = A package is not offered for this NAS.
+error-package-checksum = The download does not match its checksum and was not installed.
+error-package-install = The package could not be installed.

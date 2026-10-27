@@ -1,6 +1,7 @@
 <script lang="ts">
   import LiveOverview from './components/LiveOverview.svelte';
   import Overview from './components/Overview.svelte';
+  import Packages from './components/Packages.svelte';
   import Planned from './components/Planned.svelte';
   import Settings from './components/Settings.svelte';
   import Shares from './components/Shares.svelte';
@@ -109,6 +110,12 @@
           {/if}
         {:else if section === 'files'}
           <Shares {demo} />
+        {:else if section === 'packages'}
+          <Packages
+            {demo}
+            device={demo ? null : (sessions.devices.find((d) => d.id === sessions.current) ?? null)}
+            onssh={() => (section = 'ssh')}
+          />
         {:else if section === 'ssh'}
           <Ssh
             {demo}

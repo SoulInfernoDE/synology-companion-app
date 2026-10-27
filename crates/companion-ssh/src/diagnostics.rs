@@ -73,8 +73,11 @@ impl Connection {
     /// The installed memory modules, read with `dmidecode` as root.
     pub async fn memory_modules(&self, password: &str) -> Result<Vec<MemoryModule>, Error> {
         let output = self.run_sudo("dmidecode -t 17", password).await?;
-        if !output.success() {
+        if output.sudo_refused() {
             return Err(Error::AuthFailed);
+        }
+        if !output.success() {
+            return Err(Error::Protocol(output.stderr.trim().to_owned()));
         }
         Ok(parse_memory(&output.stdout))
     }

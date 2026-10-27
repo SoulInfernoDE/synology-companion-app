@@ -6,7 +6,8 @@ use std::time::Duration;
 
 use companion_discovery::FoundNas;
 use companion_dsm::{
-    AuthError, Client, Credentials, Error, Overview, Session, Shares, SshService, Updates,
+    AuthError, Client, Credentials, Error, Overview, Package, PackageSources, Session, Shares,
+    SshService, Updates,
 };
 use serde::{Deserialize, Serialize};
 use tauri::State;
@@ -518,6 +519,59 @@ pub async fn ssh_service(state: State<'_, AppState>) -> Result<SshService, Failu
 #[tauri::command]
 pub async fn enable_ssh(port: u16, state: State<'_, AppState>) -> Result<(), Failure> {
     on_nas!(state, |client, session| client.enable_ssh(session, port))
+}
+
+#[tauri::command]
+pub async fn packages(state: State<'_, AppState>) -> Result<Vec<Package>, Failure> {
+    catalogue(&state).await
+}
+
+/// Installed packages and the catalogue of the current NAS.
+pub(crate) async fn catalogue(state: &AppState) -> Result<Vec<Package>, Failure> {
+    on_nas!(state, |client, session| client.packages(session))
+}
+
+#[tauri::command]
+pub async fn package_sources(state: State<'_, AppState>) -> Result<PackageSources, Failure> {
+    on_nas!(state, |client, session| client.package_sources(session))
+}
+
+/// Adds a package source. With `trust`, Package Center also accepts packages of
+/// trusted publishers, which sources like SynoCommunity need.
+#[tauri::command]
+pub async fn add_package_source(
+    name: String,
+    url: String,
+    trust: bool,
+    state: State<'_, AppState>,
+) -> Result<PackageSources, Failure> {
+    let (name, url) = (name.trim().to_owned(), url.trim().to_owned());
+    if !url.starts_with("https://") && !url.starts_with("http://") {
+        return Err(Failure::new("feed-invalid", None));
+    }
+    on_nas!(state, |client, session| client
+        .add_feed(session, &name, &url))
+    .map_err(|failure| match failure.detail.as_deref() {
+        // DSM could not read a package list at that address.
+        Some(detail) if detail.contains("4590") => Failure::new("feed-invalid", None),
+        _ => failure,
+    })?;
+    if trust {
+        let sources = on_nas!(state, |client, session| client.package_sources(session))?;
+        if sources.trust_level == 0 {
+            on_nas!(state, |client, session| client.set_trust_level(session, 1))?;
+        }
+    }
+    on_nas!(state, |client, session| client.package_sources(session))
+}
+
+#[tauri::command]
+pub async fn remove_package_source(
+    url: String,
+    state: State<'_, AppState>,
+) -> Result<PackageSources, Failure> {
+    on_nas!(state, |client, session| client.remove_feed(session, &url))?;
+    on_nas!(state, |client, session| client.package_sources(session))
 }
 
 #[derive(Debug, Clone, Copy, Deserialize)]

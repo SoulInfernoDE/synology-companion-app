@@ -44,6 +44,9 @@ struct World {
     accounts: HashMap<String, String>,
     /// DSM's SSH service; the mock only answers the setting, it runs no SSH server.
     ssh: bool,
+    /// Package sources as (name, address), and Package Center's trust level.
+    feeds: Vec<(String, String)>,
+    trust_level: u8,
 }
 
 fn options() -> Options {
@@ -87,7 +90,9 @@ fn api_list() -> Value {
         "SYNO.Core.Network",
         "SYNO.Core.Network.Ethernet",
         "SYNO.Core.Package",
+        "SYNO.Core.Package.Feed",
         "SYNO.Core.Package.Server",
+        "SYNO.Core.Package.Setting",
         "SYNO.Core.QuickStart.Info",
         "SYNO.Core.Share",
         "SYNO.Core.System",
@@ -156,11 +161,23 @@ fn installed_packages() -> Value {
     ]})
 }
 
-fn catalogue() -> Value {
-    json!({ "packages": [
-        { "id": "SMBService", "dname": "SMB Service", "version": "4.15.13-2503" },
-        { "id": "FileStation", "dname": "File Station", "version": "1.4.2-1575" }
-    ]})
+fn catalogue(feeds: bool) -> Value {
+    let mut packages = vec![
+        json!({ "id": "SMBService", "dname": "SMB Service", "version": "4.15.13-2503",
+                "source": "syno", "desc": "Windows file sharing." }),
+        json!({ "id": "FileStation", "dname": "File Station", "version": "1.4.2-1575",
+                "source": "syno", "desc": "Manage files in the browser." }),
+        json!({ "id": "TextEditor", "dname": "Text Editor", "version": "1.2.5-0254",
+                "source": "syno", "desc": "Edit text files on the NAS." }),
+    ];
+    if feeds {
+        packages.push(json!({ "id": "synocli-file", "dname": "SynoCli File Tools",
+            "version": "4.0.3-32", "source": "others", "distributor": "SynoCommunity",
+            "desc": "Command-line tools such as nano, less and tree.",
+            "link": "https://packages.synocommunity.com/synocli-file.spk",
+            "md5": "708543379fa661d5bfabb5d179ea7d42" }));
+    }
+    json!({ "packages": packages })
 }
 
 /// The answer to one Web API call.
@@ -247,7 +264,46 @@ fn answer(
         ("SYNO.Core.Upgrade.Server", "check") => success(json!({ "update": {
             "available": true, "reboot": "now", "version": "DSM 7.4.1-90080 Update 1" } })),
         ("SYNO.Core.Package", "list") => success(installed_packages()),
-        ("SYNO.Core.Package.Server", "list") => success(catalogue()),
+        ("SYNO.Core.Package.Server", "list") => success(catalogue(!world.feeds.is_empty())),
+        ("SYNO.Core.Package.Feed", "list") => success(json!({ "items": world.feeds.iter()
+            .map(|(name, feed)| json!({ "name": name, "feed": feed })).collect::<Vec<_>>() })),
+        ("SYNO.Core.Package.Feed", "add") => {
+            // DSM sends the entry as JSON text inside a JSON string.
+            let entry: Option<Value> = serde_json::from_str::<String>(param("list"))
+                .ok()
+                .and_then(|text| serde_json::from_str(&text).ok());
+            match entry {
+                Some(entry)
+                    if entry["feed"]
+                        .as_str()
+                        .is_some_and(|f| f.starts_with("https://")) =>
+                {
+                    world.feeds.push((
+                        entry["name"].as_str().unwrap_or_default().to_owned(),
+                        entry["feed"].as_str().unwrap_or_default().to_owned(),
+                    ));
+                    success(json!({}))
+                }
+                _ => failure(4590),
+            }
+        }
+        ("SYNO.Core.Package.Feed", "delete") => {
+            let urls: Vec<String> = serde_json::from_str::<String>(param("list"))
+                .ok()
+                .and_then(|text| serde_json::from_str(&text).ok())
+                .unwrap_or_default();
+            world.feeds.retain(|(_, feed)| !urls.contains(feed));
+            success(json!({}))
+        }
+        ("SYNO.Core.Package.Setting", "get") => {
+            success(json!({ "trust_level": world.trust_level, "enable_autoupdate": false }))
+        }
+        ("SYNO.Core.Package.Setting", "set") => {
+            if let Ok(level) = param("trust_level").parse() {
+                world.trust_level = level;
+            }
+            success(json!({}))
+        }
         ("SYNO.Core.Share", "list") => success(json!({ "shares": [
             { "name": "homes", "desc": "homes contains all users' home", "hidden": false, "encryption": 0 },
             { "name": "media", "desc": "Photos, music and videos", "hidden": false, "encryption": 0 }
@@ -377,6 +433,8 @@ fn main() {
         configured: !options.unconfigured,
         accounts: HashMap::new(),
         ssh: false,
+        feeds: Vec::new(),
+        trust_level: 0,
     }));
     let options = Arc::new(options);
     for stream in listener.incoming().flatten() {
@@ -401,6 +459,8 @@ mod tests {
             configured,
             accounts: HashMap::new(),
             ssh: false,
+            feeds: Vec::new(),
+            trust_level: 0,
         }
     }
 

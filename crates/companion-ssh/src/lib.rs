@@ -15,6 +15,7 @@ use russh::{ChannelMsg, Disconnect};
 use tokio::sync::mpsc;
 
 pub mod diagnostics;
+pub mod packages;
 
 /// Adds the public key on standard input to `authorized_keys`, once, with the
 /// permissions sshd insists on. Exits with 42 when the account has no home folder.

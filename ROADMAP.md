@@ -28,7 +28,7 @@ Each version is usable on its own. Features that change the NAS beyond DSM's own
 - [x] Wake-on-LAN, restart, shut down, silence the beeper
 - [x] Open shared folders (SMB) in the file manager of each system
 - [x] Available DSM and package updates
-- [ ] Install DSM and package updates from the app
+- [x] Install package updates from the app (v0.4, over SSH with `synopkg`); DSM updates stay in DSM, where the update can be followed on the screen of the NAS
 - [x] Several NAS side by side: switch in the sidebar, disconnect one, tray and notifications watch all
 - [x] Standalone mock DSM server from the recorded answers, to try the app without a NAS, with two-step verification and first-time setup
 
@@ -45,7 +45,7 @@ Each version is usable on its own. Features that change the NAS beyond DSM's own
 - [ ] Recipe engine: manifest with source repository, pinned version, checksum, steps _check / plan / backup / apply / verify / restore_, licence and supported DSM versions ([architecture](docs/architecture.md#recipes))
 - [ ] Journal of every change, exportable
 - [ ] First recipe: third-party drives (Synology_HDD_db), including restore
-- [ ] Package sources: add SynoCommunity and other feeds, browse and install their packages
+- [x] Package sources: add SynoCommunity and other feeds, browse and install their packages (with the packages they depend on)
 - [ ] Container images: check for newer images and recreate containers
 
 ## v0.5 – After the update

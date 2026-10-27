@@ -24,13 +24,7 @@ export interface Section {
 export const sections: readonly Section[] = [
   { id: 'overview', label: 'nav-overview', icon: LayoutDashboard },
   { id: 'files', label: 'nav-files', icon: FolderOpen },
-  {
-    id: 'packages',
-    label: 'nav-packages',
-    icon: Package,
-    planned: '0.4',
-    description: 'planned-packages',
-  },
+  { id: 'packages', label: 'nav-packages', icon: Package },
   { id: 'ssh', label: 'nav-ssh', icon: SquareTerminal },
   {
     id: 'extensions',

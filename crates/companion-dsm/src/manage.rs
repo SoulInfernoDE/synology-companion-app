@@ -67,7 +67,7 @@ fn version_parts(version: &str) -> Vec<u64> {
 }
 
 /// Whether `available` is newer than `installed`.
-fn is_newer(available: &str, installed: &str) -> bool {
+pub(crate) fn is_newer(available: &str, installed: &str) -> bool {
     version_parts(available) > version_parts(installed)
 }
 

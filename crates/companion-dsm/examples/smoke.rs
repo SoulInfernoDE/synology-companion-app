@@ -80,6 +80,36 @@ async fn main() {
     println!("identity: {:?}", client.identity(&session).await);
     println!("updates: {:?}", client.updates(&session).await);
     println!("shares: {:?}", client.shares(&session).await);
+    println!("ssh: {:?}", client.ssh_service(&session).await);
+    println!("sources: {:?}", client.package_sources(&session).await);
+    println!(
+        "add source: {:?}",
+        client
+            .add_feed(
+                &session,
+                "SynoCommunity",
+                "https://packages.synocommunity.com/"
+            )
+            .await
+    );
+    let packages = client.packages(&session).await.expect("packages");
+    for package in &packages {
+        println!(
+            "  {} {:?} → {:?} {:?} update={}",
+            package.id,
+            package.installed,
+            package.available,
+            package.publisher,
+            package.has_update()
+        );
+    }
+    println!(
+        "remove source: {:?}",
+        client
+            .remove_feed(&session, "https://packages.synocommunity.com/")
+            .await
+    );
+    println!("sources: {:?}", client.package_sources(&session).await);
     println!("beep: {:?}", client.stop_beep(&session).await);
     println!("reboot: {:?}", client.reboot(&session).await);
     client.logout(&session).await;

@@ -7,6 +7,7 @@ use std::collections::HashMap;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::{Arc, Mutex};
 
+use companion_dsm::Package;
 use companion_ssh::diagnostics::{Diagnostics, MemoryModule};
 use companion_ssh::{Auth, Connection, ShellWriter};
 use serde::{Deserialize, Serialize};
@@ -351,5 +352,138 @@ pub fn terminal_close(id: u32, ssh: State<'_, SshState>) {
         .and_then(|mut terminals| terminals.remove(&id))
     {
         writer.close();
+    }
+}
+
+/// The packages to install for `id`, dependencies first: those not installed
+/// yet, then `id` itself (installed or updated).
+fn install_order<'a>(id: &str, catalogue: &'a [Package]) -> Result<Vec<&'a Package>, String> {
+    fn visit<'a>(
+        id: &str,
+        target: bool,
+        catalogue: &'a [Package],
+        order: &mut Vec<&'a Package>,
+        seen: &mut Vec<String>,
+    ) -> Result<(), String> {
+        if seen.iter().any(|known| known == id) {
+            return Ok(());
+        }
+        seen.push(id.to_owned());
+        let package = catalogue
+            .iter()
+            .find(|package| package.id == id)
+            .ok_or_else(|| id.to_owned())?;
+        if !target && package.installed.is_some() {
+            return Ok(());
+        }
+        if package.available.is_none() {
+            return Err(id.to_owned());
+        }
+        for dependency in &package.depends {
+            visit(dependency, false, catalogue, order, seen)?;
+        }
+        order.push(package);
+        Ok(())
+    }
+    let mut order = Vec::new();
+    visit(id, true, catalogue, &mut order, &mut Vec::new())?;
+    Ok(order)
+}
+
+/// Installs a package, or updates it, with the packages it needs. Runs as root
+/// over SSH; the password comes from the interface or the keychain.
+#[tauri::command]
+pub async fn install_package(
+    id: String,
+    password: Option<String>,
+    state: State<'_, AppState>,
+    ssh: State<'_, SshState>,
+) -> Result<Vec<String>, Failure> {
+    use companion_ssh::packages::{Installed, Source};
+
+    let device = state.current_device().await?;
+    let catalogue = crate::commands::catalogue(&state).await?;
+    let order = install_order(&id, &catalogue)
+        .map_err(|missing| Failure::new("package-unavailable", missing))?;
+    let password = match password {
+        Some(password) => password,
+        None => stored_password(&device)
+            .await
+            .ok_or_else(|| Failure::new("password-required", None))?,
+    };
+    let open = connection(&ssh, &device).await?;
+    let mut done = Vec::new();
+    for package in order {
+        let source = match &package.download {
+            Some(download) => Source::Download {
+                url: &download.url,
+                md5: &download.md5,
+            },
+            None => Source::Synology,
+        };
+        match open.install_package(&package.id, source, &password).await? {
+            Installed::Done => done.push(package.name.clone()),
+            Installed::SudoRefused => return Err(Failure::new("sudo", None)),
+            Installed::ChecksumMismatch => {
+                return Err(Failure::new("package-checksum", package.name.clone()));
+            }
+            Installed::Failed(reason) => {
+                return Err(Failure::new(
+                    "package-install",
+                    format!("{}: {reason}", package.name),
+                ));
+            }
+        }
+    }
+    Ok(done)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn package(id: &str, installed: bool, depends: &[&str]) -> Package {
+        Package {
+            id: id.into(),
+            name: id.into(),
+            description: String::new(),
+            installed: installed.then(|| "1.0".into()),
+            available: Some("1.1".into()),
+            publisher: None,
+            status: None,
+            beta: false,
+            system: false,
+            depends: depends.iter().map(|&d| d.into()).collect(),
+            download: None,
+        }
+    }
+
+    #[test]
+    fn installs_missing_dependencies_first() {
+        let catalogue = [
+            package("app", false, &["node", "web"]),
+            package("node", false, &["base"]),
+            package("base", false, &[]),
+            package("web", true, &["base"]),
+        ];
+        let order: Vec<_> = install_order("app", &catalogue)
+            .unwrap()
+            .iter()
+            .map(|p| p.id.as_str())
+            .collect();
+        assert_eq!(order, ["base", "node", "app"]);
+        // Updating an installed package also installs what it lacks.
+        let order: Vec<_> = install_order("web", &catalogue)
+            .unwrap()
+            .iter()
+            .map(|p| p.id.as_str())
+            .collect();
+        assert_eq!(order, ["base", "web"]);
+    }
+
+    #[test]
+    fn reports_a_missing_dependency() {
+        let catalogue = [package("app", false, &["gone"])];
+        assert_eq!(install_order("app", &catalogue).unwrap_err(), "gone");
     }
 }

@@ -28,7 +28,7 @@ Jede Version ist für sich nutzbar. Funktionen, die das NAS über DSMs eigene Ei
 - [x] Wake-on-LAN, Neustart, Herunterfahren, Piepton abschalten
 - [x] Freigaben (SMB) im Dateimanager des jeweiligen Systems öffnen
 - [x] Verfügbare DSM- und Paket-Updates
-- [ ] DSM- und Paket-Updates aus der App installieren
+- [x] Paket-Updates aus der App installieren (v0.4, über SSH mit `synopkg`); DSM-Updates bleiben in DSM, wo sich das Update auf dem Bildschirm des NAS verfolgen lässt
 - [x] Mehrere NAS nebeneinander: Wechsel in der Seitenleiste, einzeln trennen, Tray und Benachrichtigungen beobachten alle
 - [x] Eigenständiger nachgebauter DSM-Server aus den aufgezeichneten Antworten, um die App ohne NAS auszuprobieren, mit Bestätigung in zwei Schritten und Ersteinrichtung
 
@@ -45,7 +45,7 @@ Jede Version ist für sich nutzbar. Funktionen, die das NAS über DSMs eigene Ei
 - [ ] Rezept-Engine: Manifest mit Quell-Repository, fester Version, Prüfsumme, Schritten _prüfen / planen / sichern / anwenden / kontrollieren / wiederherstellen_, Lizenz und unterstützten DSM-Versionen ([Architektur](docs/architecture.de.md#rezepte))
 - [ ] Protokoll jeder Änderung, exportierbar
 - [ ] Erstes Rezept: Festplatten von Drittanbietern (Synology_HDD_db), mit Wiederherstellung
-- [ ] Paketquellen: SynoCommunity und andere Quellen hinzufügen, Pakete durchsuchen und installieren
+- [x] Paketquellen: SynoCommunity und andere Quellen hinzufügen, Pakete durchsuchen und installieren (samt der Pakete, die sie brauchen)
 - [ ] Container-Images: auf neuere Images prüfen und Container neu erstellen
 
 ## v0.5 – Nach dem Update

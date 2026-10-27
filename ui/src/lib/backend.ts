@@ -299,3 +299,50 @@ export const terminalWrite = (id: number, data: string) =>
 export const terminalResize = (id: number, cols: number, rows: number) =>
   invoke<void>('terminal_resize', { id, cols, rows });
 export const terminalClose = (id: number) => invoke<void>('terminal_close', { id });
+
+export interface Package {
+  id: string;
+  name: string;
+  description: string;
+  installed: string | null;
+  available: string | null;
+  /** "SynoCommunity"; null for Synology's own packages. */
+  publisher: string | null;
+  status: string | null;
+  beta: boolean;
+  system: boolean;
+  depends: string[];
+  download: { url: string; md5: string } | null;
+}
+
+export interface PackageSources {
+  feeds: { name: string; url: string }[];
+  /** 0: Synology only, 1: also trusted publishers, 2: any publisher. */
+  trustLevel: number;
+}
+
+export const packages = () => invoke<Package[]>('packages');
+export const packageSources = () => invoke<PackageSources>('package_sources');
+export const addPackageSource = (name: string, url: string, trust: boolean) =>
+  invoke<PackageSources>('add_package_source', { name, url, trust });
+export const removePackageSource = (url: string) =>
+  invoke<PackageSources>('remove_package_source', { url });
+/** Installs or updates a package with what it needs; returns the names installed. */
+export const installPackage = (id: string, password?: string) =>
+  invoke<string[]>('install_package', { id, password });
+
+/** Whether Package Center offers a newer version than the installed one. */
+export function hasUpdate(pkg: Package): boolean {
+  if (!pkg.installed || !pkg.available) return false;
+  const parts = (version: string) =>
+    version
+      .split(/\D+/)
+      .filter(Boolean)
+      .map((part) => Number(part));
+  const [a, b] = [parts(pkg.available), parts(pkg.installed)];
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    const [x, y] = [a[i] ?? -1, b[i] ?? -1];
+    if (x !== y) return x > y;
+  }
+  return false;
+}

@@ -89,7 +89,6 @@ drive-nvme = NVMe-SSD
 ## Geplante Bereiche
 
 planned-version = Geplant für Version { $version }
-planned-packages = Community-Paketquellen wie SynoCommunity hinzufügen, ihre Pakete durchsuchen und installieren.
 planned-extensions = Community-Skripte als sichere Rezepte: jeden Befehl vorher sehen, sichern, anwenden, rückgängig machen. Festplatten von Drittanbietern kommen zuerst.
 planned-nextcloud = Nextcloud in einem geführten Durchlauf aktualisieren: PHP, MariaDB und Redis prüfen, Snapshot anlegen, Updater starten, Rechte wieder schließen.
 
@@ -338,3 +337,40 @@ error-ssh-no-home = Dein Konto hat keinen Home-Ordner auf dem NAS. Schalte den B
 error-ssh-failed = Der SSH-Befehl ist fehlgeschlagen.
 error-password-required = Dafür wird das Passwort gebraucht.
 error-sudo = sudo hat das Passwort abgelehnt.
+
+## Pakete
+
+packages-intro = Pakete installieren und aktualisieren, von Synology und aus Paketquellen wie SynoCommunity. Die Installation läuft als root über SSH.
+packages-installed = Installiert
+packages-catalogue = Katalog
+packages-sources = Quellen
+packages-needs-ssh = Installieren und Aktualisieren braucht SSH mit Schlüssel.
+packages-set-up-ssh = SSH einrichten
+packages-password-title = Passwort für sudo, um { $name } zu installieren
+packages-password-text = Die Installation läuft als root. Das Passwort geht an sudo auf dem NAS und nirgendwohin sonst.
+packages-install = Installieren
+packages-installing = Wird installiert…
+packages-update = Aktualisieren
+packages-updating = Wird aktualisiert…
+packages-update-all = Alle aktualisieren ({ $count })
+packages-done = Fertig: { $names }
+packages-stopped = angehalten
+packages-needs = braucht { $names }
+packages-none = Keine Pakete installiert.
+packages-search = Pakete suchen
+packages-no-match = Kein Paket passt.
+packages-wizard-hint = Pakete, die bei der Installation Fragen stellen (ein freigegebener Ordner, ein Port), übernehmen die Vorgaben; ändere sie danach in DSM oder installiere sie im Paket-Zentrum.
+packages-sources-warning = Pakete anderer Quellen prüft Synology nicht, und sie laufen mit den Rechten eines Pakets auf deinem NAS. Füge nur Quellen hinzu, denen du vertraust.
+packages-sources-none = Keine Paketquellen hinzugefügt.
+packages-synocommunity-text = Kostenlose Community-Pakete wie SynoCli, Jellyfin, Transmission und viele Werkzeuge. Von Freiwilligen auf GitHub gepflegt.
+packages-source-add = Hinzufügen
+packages-source-remove = Entfernen
+packages-source-other = Andere Quelle
+packages-source-name = Name
+packages-trust = Pakete vertrauenswürdiger Herausgeber zulassen
+packages-trust-hint = Das Paket-Zentrum nimmt dann Pakete an, deren Herausgeber-Zertifikat es vertraut, was es für jede hinzugefügte Quelle tut. Für SynoCommunity nötig.
+packages-demo = Beispieldaten: In der Demo wird nichts installiert.
+error-feed-invalid = DSM kann unter dieser Adresse keine Paketliste lesen.
+error-package-unavailable = Ein Paket wird für dieses NAS nicht angeboten.
+error-package-checksum = Der Download passt nicht zu seiner Prüfsumme und wurde nicht installiert.
+error-package-install = Das Paket konnte nicht installiert werden.
