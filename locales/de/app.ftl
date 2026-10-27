@@ -12,6 +12,7 @@ nav-overview = Übersicht
 nav-files = Freigaben
 nav-packages = Pakete
 nav-containers = Container
+nav-downloads = Downloads
 nav-ssh = SSH
 nav-extensions = Erweiterungen
 nav-nextcloud = Nextcloud
@@ -488,3 +489,26 @@ nextcloud-none = Unter der Freigabe web wurde kein Nextcloud gefunden.
 nextcloud-nas-php = PHP-Versionen auf diesem NAS: { $versions }
 nextcloud-demo = Beispieldaten: Die Demo aktualisiert nichts.
 error-nextcloud-failed = Nextcloud konnte nicht gelesen werden.
+
+## Download Station
+
+downloads-intro = Die Downloads von Download Station: Links hinzufügen, den Fortschritt verfolgen, anhalten, fortsetzen oder entfernen.
+downloads-link = Link (HTTP, HTTPS, FTP oder Magnet)
+downloads-add = Hinzufügen
+downloads-pause = Anhalten
+downloads-resume = Fortsetzen
+downloads-delete = Entfernen
+downloads-delete-hint = Beim Entfernen einer Aufgabe bleiben die bisher geladenen Dateien erhalten.
+downloads-none = Keine Downloads.
+downloads-demo = Beispieldaten: Die Demo lädt nichts herunter.
+downloads-status-waiting = wartet
+downloads-status-downloading = lädt
+downloads-status-paused = angehalten
+downloads-status-finishing = wird abgeschlossen
+downloads-status-finished = fertig
+downloads-status-hash_checking = wird geprüft
+downloads-status-seeding = verteilt
+downloads-status-extracting = wird entpackt
+downloads-status-error = Fehler
+error-downloads-missing = Download Station ist auf diesem NAS nicht installiert. Installiere sie im Paket-Zentrum.
+error-download-link = Das ist kein Link, den Download Station laden kann.

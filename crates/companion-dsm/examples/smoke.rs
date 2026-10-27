@@ -110,6 +110,13 @@ async fn main() {
             .await
     );
     println!("sources: {:?}", client.package_sources(&session).await);
+    println!(
+        "add download: {:?}",
+        client
+            .add_download(&session, "https://example.org/file.iso")
+            .await
+    );
+    println!("downloads: {:?}", client.downloads(&session).await);
     println!("beep: {:?}", client.stop_beep(&session).await);
     println!("reboot: {:?}", client.reboot(&session).await);
     client.logout(&session).await;

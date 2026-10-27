@@ -4,6 +4,7 @@
 import type {
   Container,
   Diagnostics,
+  Download,
   JournalEntry,
   Memory,
   MemoryModule,
@@ -379,3 +380,36 @@ export const demoNextcloud: NextcloudEnvironment = {
   mariadb: '10.11.6',
   redis: '7.2.5',
 };
+
+export const demoDownloads: Download[] = [
+  {
+    id: 'dbid_1',
+    title: 'debian-13.1.0-amd64-netinst.iso',
+    status: 'downloading',
+    error: null,
+    size: 754_974_720,
+    downloaded: 301_989_888,
+    speed: 4_200_000,
+    destination: 'downloads',
+  },
+  {
+    id: 'dbid_2',
+    title: 'ubuntu-24.04.3-desktop-amd64.iso',
+    status: 'paused',
+    error: null,
+    size: 6_203_355_136,
+    downloaded: 1_240_000_000,
+    speed: 0,
+    destination: 'downloads',
+  },
+  {
+    id: 'dbid_3',
+    title: 'big-buck-bunny-1080p.mp4',
+    status: 'finished',
+    error: null,
+    size: 725_106_140,
+    downloaded: 725_106_140,
+    speed: 0,
+    destination: 'video',
+  },
+];

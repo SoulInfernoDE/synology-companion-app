@@ -504,3 +504,21 @@ export function phpFits(
     (requirements.phpBelow === null || compare(php, parts(requirements.phpBelow)) < 0)
   );
 }
+
+export interface Download {
+  id: string;
+  title: string;
+  status: string;
+  error: string | null;
+  size: number;
+  downloaded: number;
+  speed: number;
+  destination: string | null;
+}
+
+export type DownloadAction = 'pause' | 'resume' | 'delete';
+
+export const downloads = () => invoke<Download[]>('downloads');
+export const addDownload = (uri: string) => invoke<void>('add_download', { uri });
+export const downloadAction = (id: string, action: DownloadAction) =>
+  invoke<void>('download_action', { id, action });

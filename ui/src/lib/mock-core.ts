@@ -21,6 +21,7 @@ import type {
 import {
   demoContainers,
   demoDiagnostics,
+  demoDownloads,
   demoJournal,
   demoMemoryReport,
   demoNextcloud,
@@ -194,6 +195,7 @@ async function recipeRun(args: Record<string, unknown>, action: 'apply' | 'resto
 }
 
 let sshEnabled = false;
+let mockDownloads = demoDownloads;
 let mockContainers = demoContainers;
 let mockPackages = demoPackages;
 let mockSources = { feeds: [] as { name: string; url: string }[], trustLevel: 0 };
@@ -346,6 +348,31 @@ const commands: Record<string, (args: Record<string, unknown>) => Promise<unknow
   nextcloud_step: async (args) => {
     await wait(700);
     return { ok: true, output: `Mock step ${String(args.step)}: done.` };
+  },
+  downloads: async () => mockDownloads,
+  add_download: async (args) => {
+    const uri = String(args.uri);
+    if (!/^(https?|ftps?):\/\/|^magnet:/i.test(uri)) throw { key: 'download-link' };
+    mockDownloads = [
+      ...mockDownloads,
+      {
+        id: `dbid_${mockDownloads.length + 10}`,
+        title: uri.split('/').pop() || uri,
+        status: 'waiting',
+        error: null,
+        size: 0,
+        downloaded: 0,
+        speed: 0,
+        destination: 'downloads',
+      },
+    ];
+  },
+  download_action: async (args) => {
+    if (args.action === 'delete') mockDownloads = mockDownloads.filter((d) => d.id !== args.id);
+    else
+      mockDownloads = mockDownloads.map((d) =>
+        d.id === args.id ? { ...d, status: args.action === 'pause' ? 'paused' : 'downloading' } : d,
+      );
   },
   forget_device: async (args) => {
     saved = saved.filter((device) => device.id !== args.id);

@@ -5,6 +5,7 @@
 //! after the user trusted them (see [`tls`]).
 
 mod cpu;
+mod downloads;
 mod manage;
 mod overview;
 mod packages;
@@ -18,9 +19,10 @@ use serde::Deserialize;
 use serde_json::Value;
 use url::Url;
 
+pub use downloads::{Download, DownloadAction};
 pub use manage::{DsmUpdate, PackageUpdate, Share, Shares, SshService, Updates};
 pub use overview::{Drive, DriveKind, Health, NetworkPort, Overview, Volume};
-pub use packages::{Download, Feed, Package, PackageSources};
+pub use packages::{Feed, Package, PackageDownload, PackageSources};
 pub use setup::{
     PasswordRules, SetupDone, SetupInfo, SetupRequest, SetupState, TimeZone, UpdatePolicy,
 };
@@ -46,6 +48,7 @@ const APIS: &[&str] = &[
     "SYNO.Core.Terminal",
     "SYNO.Core.Upgrade.Server",
     "SYNO.Core.User.Home",
+    "SYNO.DownloadStation.Task",
     "SYNO.Storage.CGI.Storage",
 ];
 

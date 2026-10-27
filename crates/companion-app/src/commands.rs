@@ -6,8 +6,8 @@ use std::time::Duration;
 
 use companion_discovery::FoundNas;
 use companion_dsm::{
-    AuthError, Client, Credentials, Error, Overview, Package, PackageSources, Session, Shares,
-    SshService, Updates,
+    AuthError, Client, Credentials, Download, DownloadAction, Error, Overview, Package,
+    PackageSources, Session, Shares, SshService, Updates,
 };
 use serde::{Deserialize, Serialize};
 use tauri::State;
@@ -519,6 +519,47 @@ pub async fn ssh_service(state: State<'_, AppState>) -> Result<SshService, Failu
 #[tauri::command]
 pub async fn enable_ssh(port: u16, state: State<'_, AppState>) -> Result<(), Failure> {
     on_nas!(state, |client, session| client.enable_ssh(session, port))
+}
+
+/// The tasks of Download Station; `downloads-missing` when it is not installed.
+#[tauri::command]
+pub async fn downloads(state: State<'_, AppState>) -> Result<Vec<Download>, Failure> {
+    on_nas!(state, |client, session| client.downloads(session)).map_err(missing_download_station)
+}
+
+#[tauri::command]
+pub async fn add_download(uri: String, state: State<'_, AppState>) -> Result<(), Failure> {
+    let uri = uri.trim().to_owned();
+    let known = ["http://", "https://", "ftp://", "ftps://", "magnet:"];
+    if !known
+        .iter()
+        .any(|scheme| uri.to_lowercase().starts_with(scheme))
+    {
+        return Err(Failure::new("download-link", None));
+    }
+    on_nas!(state, |client, session| client.add_download(session, &uri))
+        .map_err(missing_download_station)
+}
+
+#[tauri::command]
+pub async fn download_action(
+    id: String,
+    action: DownloadAction,
+    state: State<'_, AppState>,
+) -> Result<(), Failure> {
+    on_nas!(state, |client, session| client
+        .download_action(session, &id, action))
+    .map_err(missing_download_station)
+}
+
+/// DSM reports an API it does not know (Download Station not installed) as 102.
+fn missing_download_station(failure: Failure) -> Failure {
+    match failure.detail.as_deref() {
+        Some(detail) if detail.contains("SYNO.DownloadStation") && detail.contains("102") => {
+            Failure::new("downloads-missing", None)
+        }
+        _ => failure,
+    }
 }
 
 #[tauri::command]

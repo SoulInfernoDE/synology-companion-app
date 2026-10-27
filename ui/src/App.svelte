@@ -1,5 +1,6 @@
 <script lang="ts">
   import Containers from './components/Containers.svelte';
+  import Downloads from './components/Downloads.svelte';
   import Extensions from './components/Extensions.svelte';
   import LiveOverview from './components/LiveOverview.svelte';
   import Nextcloud from './components/Nextcloud.svelte';
@@ -125,6 +126,8 @@
             device={demo ? null : (sessions.devices.find((d) => d.id === sessions.current) ?? null)}
             onssh={() => (section = 'ssh')}
           />
+        {:else if section === 'downloads'}
+          <Downloads {demo} />
         {:else if section === 'extensions'}
           <Extensions
             {demo}

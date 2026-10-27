@@ -30,7 +30,7 @@ pub struct Package {
     pub depends: Vec<String>,
     /// Where a package from another source is downloaded, with its MD5 checksum.
     /// Synology's own packages are installed by name instead.
-    pub download: Option<Download>,
+    pub download: Option<PackageDownload>,
 }
 
 impl Package {
@@ -44,7 +44,7 @@ impl Package {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Download {
+pub struct PackageDownload {
     pub url: String,
     pub md5: String,
 }
@@ -108,7 +108,7 @@ pub(crate) fn merge(installed: &Value, catalogue: &Value) -> Vec<Package> {
                 .map(|deps| deps.keys().cloned().collect())
                 .unwrap_or_default(),
             download: match (others, text(&offer["link"]), text(&offer["md5"])) {
-                (true, Some(url), Some(md5)) => Some(Download { url, md5 }),
+                (true, Some(url), Some(md5)) => Some(PackageDownload { url, md5 }),
                 _ => None,
             },
             id,

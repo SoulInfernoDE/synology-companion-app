@@ -47,6 +47,8 @@ struct World {
     /// Package sources as (name, address), and Package Center's trust level.
     feeds: Vec<(String, String)>,
     trust_level: u8,
+    /// Download Station tasks as (id, title, status).
+    downloads: Vec<(String, String, String)>,
 }
 
 fn options() -> Options {
@@ -103,6 +105,7 @@ fn api_list() -> Value {
         "SYNO.Core.User.Home",
         "SYNO.Core.User.PasswordPolicy",
         "SYNO.Core.User.UsernamePolicy",
+        "SYNO.DownloadStation.Task",
         "SYNO.Entry.Request",
         "SYNO.Storage.CGI.Storage",
     ];
@@ -111,7 +114,16 @@ fn api_list() -> Value {
         .map(|api| {
             (
                 (*api).to_owned(),
-                json!({ "path": "entry.cgi", "minVersion": 1, "maxVersion": 7 }),
+                // Download Station keeps its own CGI path, as on a real NAS.
+                json!({
+                    "path": if api.starts_with("SYNO.DownloadStation") {
+                        "DownloadStation/task.cgi"
+                    } else {
+                        "entry.cgi"
+                    },
+                    "minVersion": 1,
+                    "maxVersion": 7,
+                }),
             )
         })
         .collect();
@@ -317,6 +329,47 @@ fn answer(
             success(json!({}))
         }
         ("SYNO.Core.User.Home", "get") => success(json!({ "enable": true })),
+        ("SYNO.DownloadStation.Task", "list") => success(json!({
+            "total": world.downloads.len(),
+            "tasks": world.downloads.iter().map(|(id, title, status)| json!({
+                "id": id, "title": title, "status": status, "size": 700_000_000u64,
+                "additional": {
+                    "transfer": {
+                        "size_downloaded": if status == "finished" { 700_000_000u64 } else { 280_000_000 },
+                        "speed_download": if status == "downloading" { 4_200_000u64 } else { 0 },
+                    },
+                    "detail": { "destination": "downloads" },
+                },
+            })).collect::<Vec<_>>(),
+        })),
+        ("SYNO.DownloadStation.Task", "create") => {
+            let uri = param("uri");
+            let title = uri.rsplit('/').next().unwrap_or(uri).to_owned();
+            let id = format!("dbid_{}", world.downloads.len() + 10);
+            world.downloads.push((id, title, "waiting".into()));
+            success(json!({}))
+        }
+        ("SYNO.DownloadStation.Task", "pause" | "resume" | "delete") => {
+            let id = param("id").to_owned();
+            match method {
+                "delete" => world.downloads.retain(|(known, ..)| *known != id),
+                _ => {
+                    let status = if method == "pause" {
+                        "paused"
+                    } else {
+                        "downloading"
+                    };
+                    for task in world
+                        .downloads
+                        .iter_mut()
+                        .filter(|(known, ..)| *known == id)
+                    {
+                        task.2 = status.into();
+                    }
+                }
+            }
+            success(json!({}))
+        }
         ("SYNO.Core.System", "reboot" | "shutdown")
         | ("SYNO.Core.Hardware.BeepControl", "stop_beep") => success(json!({})),
         _ => failure(103),
@@ -435,6 +488,18 @@ fn main() {
         ssh: false,
         feeds: Vec::new(),
         trust_level: 0,
+        downloads: vec![
+            (
+                "dbid_1".into(),
+                "debian-13.1.0-amd64-netinst.iso".into(),
+                "downloading".into(),
+            ),
+            (
+                "dbid_2".into(),
+                "big-buck-bunny.mp4".into(),
+                "finished".into(),
+            ),
+        ],
     }));
     let options = Arc::new(options);
     for stream in listener.incoming().flatten() {
@@ -461,6 +526,7 @@ mod tests {
             ssh: false,
             feeds: Vec::new(),
             trust_level: 0,
+            downloads: Vec::new(),
         }
     }
 
