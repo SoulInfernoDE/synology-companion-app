@@ -77,7 +77,7 @@ Afterwards the app signs in with the new account and sets updates, time zone, us
 
 ## Tray and notifications
 
-A background task asks the active NAS every minute, also while the window is hidden, and keeps what it saw: the tray shows "name: state", and a notification tells when a volume or drive becomes worse than before, when the NAS stops or starts answering, when everything is healthy again and, checked every six hours, when DSM offers a new version (once per version). Tray menu and notifications use the same Fluent catalogs as the interface, embedded into the binary; the interface hands its language to the core. Whether closing the window keeps the app in the tray, and whether notifications are shown, is kept in `preferences.json` next to the list of NAS. Keeping the app in the tray is off by default, because some Linux desktops show no tray icons.
+The app can be signed in to several NAS at once; one of them is current and shown, the others stay signed in. A background task asks every signed-in NAS every minute, also while the window is hidden, and keeps what it saw: the tray shows "name: state", and a notification tells when a volume or drive becomes worse than before, when the NAS stops or starts answering, when everything is healthy again and, checked every six hours, when DSM offers a new version (once per version). Tray menu and notifications use the same Fluent catalogs as the interface, embedded into the binary; the interface hands its language to the core. Whether closing the window keeps the app in the tray, and whether notifications are shown, is kept in `preferences.json` next to the list of NAS. Keeping the app in the tray is off by default, because some Linux desktops show no tray icons.
 
 ## Skins
 

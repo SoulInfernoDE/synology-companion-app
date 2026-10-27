@@ -55,6 +55,8 @@ fn main() {
             commands::connect,
             commands::overview,
             commands::disconnect,
+            commands::connected,
+            commands::switch_to,
             commands::forget_device,
             commands::updates,
             commands::shares,

@@ -1,7 +1,8 @@
-//! Watches the active NAS in the background, also while the window is hidden: the
-//! tray shows its state, and notifications tell about problems, about the NAS not
-//! answering and about a new DSM version.
+//! Watches every signed-in NAS in the background, also while the window is hidden:
+//! the tray shows their state, and notifications tell about problems, about a NAS
+//! not answering and about a new DSM version.
 
+use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
 use companion_dsm::{Error, Health, Overview};
@@ -134,12 +135,18 @@ fn notify(app: &AppHandle, title: &str, body: &str) {
     let _ = app.notification().builder().title(title).body(body).show();
 }
 
-/// Runs for the lifetime of the app.
+/// What the monitor remembers about one signed-in NAS.
+#[derive(Default)]
+struct Watch {
+    previous: Option<Status>,
+    last_update_check: Option<Instant>,
+    announced_dsm: Option<String>,
+}
+
+/// Runs for the lifetime of the app and watches every signed-in NAS.
 pub async fn run(app: AppHandle) {
-    let mut watched: Option<String> = None;
-    let mut previous: Option<Status> = None;
-    let mut last_update_check: Option<Instant> = None;
-    let mut announced_dsm: Option<String> = None;
+    let mut watches: HashMap<String, Watch> = HashMap::new();
+    let mut shown: Option<String> = None;
     // A short first wait, so the tray shows the state soon after signing in.
     let mut wait = Duration::from_secs(5);
 
@@ -147,52 +154,58 @@ pub async fn run(app: AppHandle) {
         tokio::time::sleep(wait).await;
         wait = INTERVAL;
         let state = app.state::<AppState>();
-        let tray = app.try_state::<TrayItems>();
-        let Some(target) = state.target().await else {
-            if (watched.take().is_some() || previous.is_none())
-                && let Some(tray) = &tray
-            {
-                let text = state.texts().get("tray-not-connected", None);
-                tray.set_status(&app, &text);
-            }
-            previous = None;
-            continue;
-        };
-        if watched.as_deref() != Some(target.id.as_str()) {
-            watched = Some(target.id.clone());
-            previous = None;
-            last_update_check = None;
-            announced_dsm = None;
-        }
+        let targets = state.targets().await;
+        watches.retain(|id, _| targets.iter().any(|target| &target.id == id));
 
-        let status = match target.client.overview(&target.session).await {
-            Ok(overview) => Status::from_overview(&overview, &state.texts()),
-            Err(Error::Network(_)) => Status::unreachable(),
-            // An ended session is renewed by the interface; check again later.
-            Err(_) => continue,
-        };
-        let messages = changes(previous.as_ref(), &status, &state.texts());
-        if let Some(tray) = &tray {
-            tray.set_status(&app, &tray_text(&target.name, &status, &state.texts()));
-        }
-        for message in messages {
-            notify(&app, &target.name, &message);
-        }
-        let reachable = status.reachable;
-        previous = Some(status);
-
-        if reachable && last_update_check.is_none_or(|time| time.elapsed() >= UPDATE_INTERVAL) {
-            last_update_check = Some(Instant::now());
-            let updates = target.client.updates(&target.session).await;
-            if let Some(update) = updates.dsm
-                && announced_dsm.as_deref() != Some(update.version.as_str())
-            {
-                let mut args = FluentArgs::new();
-                args.set("version", update.version.clone());
-                let message = state.texts().get("notify-dsm-update", Some(&args));
+        let mut lines = Vec::new();
+        for target in &targets {
+            let watch = watches.entry(target.id.clone()).or_default();
+            let status = match target.client.overview(&target.session).await {
+                Ok(overview) => Status::from_overview(&overview, &state.texts()),
+                Err(Error::Network(_)) => Status::unreachable(),
+                // An ended session is renewed by the interface; keep the last state.
+                Err(_) => {
+                    if let Some(previous) = &watch.previous {
+                        lines.push(tray_text(&target.name, previous, &state.texts()));
+                    }
+                    continue;
+                }
+            };
+            for message in changes(watch.previous.as_ref(), &status, &state.texts()) {
                 notify(&app, &target.name, &message);
-                announced_dsm = Some(update.version);
             }
+            lines.push(tray_text(&target.name, &status, &state.texts()));
+            let reachable = status.reachable;
+            watch.previous = Some(status);
+
+            let due = watch
+                .last_update_check
+                .is_none_or(|time| time.elapsed() >= UPDATE_INTERVAL);
+            if reachable && due {
+                watch.last_update_check = Some(Instant::now());
+                let updates = target.client.updates(&target.session).await;
+                if let Some(update) = updates.dsm
+                    && watch.announced_dsm.as_deref() != Some(update.version.as_str())
+                {
+                    let mut args = FluentArgs::new();
+                    args.set("version", update.version.clone());
+                    let message = state.texts().get("notify-dsm-update", Some(&args));
+                    notify(&app, &target.name, &message);
+                    watch.announced_dsm = Some(update.version);
+                }
+            }
+        }
+
+        let text = if lines.is_empty() {
+            state.texts().get("tray-not-connected", None)
+        } else {
+            lines.join(" · ")
+        };
+        if shown.as_deref() != Some(text.as_str())
+            && let Some(tray) = app.try_state::<TrayItems>()
+        {
+            tray.set_status(&app, &text);
+            shown = Some(text);
         }
     }
 }

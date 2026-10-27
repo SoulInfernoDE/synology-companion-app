@@ -43,7 +43,17 @@ const found: FoundNas[] = [
 const unconfigured = new Set(['192.168.1.42']);
 let saved: KnownDevice[] = [];
 let trusted = false;
-let connected = false;
+/** Signed-in NAS ids, the current one last chosen. */
+let sessions: string[] = [];
+let current: string | null = null;
+const snapshot = () => ({
+  devices: saved.filter((device) => sessions.includes(device.id)),
+  current,
+});
+const open = (id: string) => {
+  sessions = [...sessions.filter((known) => known !== id), id];
+  current = id;
+};
 let rememberedDevice = false;
 let preferences = { language: null as string | null, closeToTray: false, notifications: true };
 
@@ -77,7 +87,7 @@ async function connect(request: ConnectRequest): Promise<ConnectOutcome> {
     mac: request.mac,
   };
   saved = [device, ...saved.filter((known) => known.id !== device.id)];
-  connected = true;
+  open(device.id);
   return { status: 'connected', device };
 }
 
@@ -126,7 +136,7 @@ async function completeSetup(request: CompleteSetupRequest) {
     rememberLogin: request.rememberLogin,
   };
   saved = [device, ...saved.filter((known) => known.id !== device.id)];
-  connected = true;
+  open(device.id);
   return { device, skipped: [] };
 }
 
@@ -138,7 +148,7 @@ const commands: Record<string, (args: Record<string, unknown>) => Promise<unknow
   known_devices: async () => saved,
   connect: (args) => connect(args.request as ConnectRequest),
   overview: async () => {
-    if (!connected) throw { key: 'not-connected' };
+    if (!current) throw { key: 'not-connected' };
     return { ...demoOverview, kernel: null };
   },
   updates: async () => (await wait(1500), demoUpdates),
@@ -149,12 +159,20 @@ const commands: Record<string, (args: Record<string, unknown>) => Promise<unknow
     preferences = args.preferences as typeof preferences;
   },
   power: async () => {
-    connected = false;
+    sessions = sessions.filter((id) => id !== current);
+    current = sessions[0] ?? null;
   },
   open_share: async () => undefined,
   wake: async () => undefined,
   disconnect: async () => {
-    connected = false;
+    sessions = sessions.filter((id) => id !== current);
+    current = sessions[0] ?? null;
+    return snapshot();
+  },
+  connected: async () => snapshot(),
+  switch_to: async (args) => {
+    current = args.id as string;
+    return snapshot();
   },
   forget_device: async (args) => {
     saved = saved.filter((device) => device.id !== args.id);

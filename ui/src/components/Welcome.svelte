@@ -26,11 +26,14 @@
     onconnected,
     ondemo,
     notice = null,
+    onback = undefined,
   }: {
     onconnected: (device: KnownDevice) => void;
     ondemo: () => void;
     /** A reason the previous connection ended, shown once. */
     notice?: Failure | null;
+    /** Back to the signed-in NAS, when the screen was opened to add another one. */
+    onback?: () => void;
   } = $props();
 
   let saved = $state<KnownDevice[]>([]);
@@ -101,6 +104,10 @@
     <h1>{t('welcome-title')}</h1>
     <p class="muted">{t('welcome-subtitle')}</p>
   </header>
+
+  {#if onback}
+    <button class="button back" onclick={onback}>{t('welcome-back')}</button>
+  {/if}
 
   {#if notice}
     <p class="notice-bar" role="status">{t(`error-${notice.key}`)}</p>
@@ -281,6 +288,10 @@
   header img {
     margin-bottom: 6px;
     filter: drop-shadow(0 6px 16px rgb(0 0 0 / 0.18));
+  }
+
+  .back {
+    align-self: flex-start;
   }
 
   .notice-bar {

@@ -186,7 +186,15 @@ export const completeSetup = (request: CompleteSetupRequest) =>
 export const knownDevices = () => invoke<KnownDevice[]>('known_devices');
 export const connect = (request: ConnectRequest) => invoke<ConnectOutcome>('connect', { request });
 export const overview = () => invoke<Overview>('overview');
-export const disconnect = () => invoke<void>('disconnect');
+/** Every signed-in NAS and the one the interface shows. */
+export interface Connected {
+  devices: KnownDevice[];
+  current: string | null;
+}
+
+export const disconnect = () => invoke<Connected>('disconnect');
+export const connected = () => invoke<Connected>('connected');
+export const switchTo = (id: string) => invoke<Connected>('switch_to', { id });
 export const forgetDevice = (id: string) => invoke<void>('forget_device', { id });
 
 /** "nas.local:5001", "192.168.1.20" or "[fe80::1]:5001" → host and port (default 5001). */

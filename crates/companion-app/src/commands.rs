@@ -25,9 +25,69 @@ struct Active {
     device: KnownDevice,
 }
 
+/// The NAS the app is signed in to, and the one the interface shows.
+#[derive(Default)]
+struct Sessions {
+    all: Vec<Active>,
+    current: Option<String>,
+}
+
+/// What the interface shows in its NAS switcher.
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Connected {
+    devices: Vec<KnownDevice>,
+    current: Option<String>,
+}
+
+impl Sessions {
+    fn current_mut(&mut self) -> Option<&mut Active> {
+        let id = self.current.as_deref()?;
+        self.all.iter_mut().find(|active| active.device.id == id)
+    }
+
+    fn current(&self) -> Option<&Active> {
+        let id = self.current.as_deref()?;
+        self.all.iter().find(|active| active.device.id == id)
+    }
+
+    /// Adds a session (replacing one to the same NAS) and makes it current.
+    fn insert(&mut self, active: Active) -> Option<Active> {
+        let id = active.device.id.clone();
+        let replaced = self
+            .all
+            .iter()
+            .position(|known| known.device.id == id)
+            .map(|index| self.all.remove(index));
+        self.all.push(active);
+        self.current = Some(id);
+        replaced
+    }
+
+    /// Removes the current session; the first remaining one becomes current.
+    fn remove_current(&mut self) -> Option<Active> {
+        let id = self.current.take()?;
+        let index = self.all.iter().position(|active| active.device.id == id)?;
+        let removed = self.all.remove(index);
+        self.current = self.all.first().map(|active| active.device.id.clone());
+        Some(removed)
+    }
+
+    fn connected(&self) -> Connected {
+        Connected {
+            devices: self
+                .all
+                .iter()
+                .map(|active| active.device.clone())
+                .collect(),
+            current: self.current.clone(),
+        }
+    }
+}
+
 pub struct AppState {
     pub(crate) store: Mutex<DeviceStore>,
-    active: AsyncMutex<Option<Active>>,
+    active: AsyncMutex<Sessions>,
     /// The client holding DSM's setup session while the setup form is open.
     pub(crate) pending_setup: AsyncMutex<Option<crate::setup::PendingSetup>>,
     config_dir: PathBuf,
@@ -35,7 +95,7 @@ pub struct AppState {
     texts: RwLock<Texts>,
 }
 
-/// The active NAS, for background work that must not hold the lock while it waits.
+/// A signed-in NAS, for background work that must not hold the lock while it waits.
 pub struct Target {
     pub id: String,
     pub name: String,
@@ -48,7 +108,7 @@ impl AppState {
         let preferences = preferences::load(&config_dir);
         Self {
             store: Mutex::new(DeviceStore::load(&config_dir)),
-            active: AsyncMutex::new(None),
+            active: AsyncMutex::new(Sessions::default()),
             pending_setup: AsyncMutex::new(None),
             texts: RwLock::new(Texts::new(preferences.language.as_deref())),
             preferences: Mutex::new(preferences),
@@ -68,13 +128,19 @@ impl AppState {
             .unwrap_or_else(|poisoned| poisoned.into_inner())
     }
 
-    pub async fn target(&self) -> Option<Target> {
-        self.active.lock().await.as_ref().map(|active| Target {
-            id: active.device.id.clone(),
-            name: active.device.name.clone(),
-            client: active.client.clone(),
-            session: active.session.clone(),
-        })
+    pub async fn targets(&self) -> Vec<Target> {
+        self.active
+            .lock()
+            .await
+            .all
+            .iter()
+            .map(|active| Target {
+                id: active.device.id.clone(),
+                name: active.device.name.clone(),
+                client: active.client.clone(),
+                session: active.session.clone(),
+            })
+            .collect()
     }
 }
 
@@ -327,13 +393,13 @@ pub(crate) async fn activate(
             .map_err(|error| Failure::new("storage", error.to_string()))?;
     }
 
-    let previous = state.active.lock().await.replace(Active {
+    let replaced = state.active.lock().await.insert(Active {
         client,
         session,
         device: device.clone(),
     });
-    if let Some(previous) = previous {
-        previous.client.logout(&previous.session).await;
+    if let Some(replaced) = replaced {
+        replaced.client.logout(&replaced.session).await;
     }
     Ok(device)
 }
@@ -370,7 +436,7 @@ macro_rules! on_nas {
     ($state:expr, |$client:ident, $session:ident| $call:expr) => {{
         let mut active = $state.active.lock().await;
         let current = active
-            .as_mut()
+            .current_mut()
             .ok_or_else(|| Failure::new("not-connected", None))?;
         let first = {
             let ($client, $session) = (&current.client, &current.session);
@@ -382,7 +448,7 @@ macro_rules! on_nas {
                     let ($client, $session) = (&current.client, &current.session);
                     $call.await.map_err(Failure::from)
                 } else {
-                    *active = None;
+                    active.remove_current();
                     Err(Failure::new("session-expired", None))
                 }
             }
@@ -429,7 +495,7 @@ pub async fn power(action: Power, state: State<'_, AppState>) -> Result<(), Fail
             Power::Shutdown => client.shutdown(session).await,
         }
     })?;
-    state.active.lock().await.take();
+    state.active.lock().await.remove_current();
     Ok(())
 }
 
@@ -446,7 +512,7 @@ pub async fn open_share(
         .active
         .lock()
         .await
-        .as_ref()
+        .current()
         .map(|current| current.device.host.clone())
         .ok_or_else(|| Failure::new("not-connected", None))?;
     if name.is_empty() || name.contains(['/', '\\']) {
@@ -483,12 +549,30 @@ pub fn wake(id: String, state: State<'_, AppState>) -> Result<(), Failure> {
         .map_err(|error| Failure::new("wake", error))
 }
 
+/// Signs out of the current NAS; another signed-in NAS becomes current.
 #[tauri::command]
-pub async fn disconnect(state: State<'_, AppState>) -> Result<(), Failure> {
-    if let Some(active) = state.active.lock().await.take() {
-        active.client.logout(&active.session).await;
+pub async fn disconnect(state: State<'_, AppState>) -> Result<Connected, Failure> {
+    let mut active = state.active.lock().await;
+    if let Some(removed) = active.remove_current() {
+        removed.client.logout(&removed.session).await;
     }
-    Ok(())
+    Ok(active.connected())
+}
+
+#[tauri::command]
+pub async fn connected(state: State<'_, AppState>) -> Result<Connected, Failure> {
+    Ok(state.active.lock().await.connected())
+}
+
+/// Makes another signed-in NAS the one the interface shows.
+#[tauri::command]
+pub async fn switch_to(id: String, state: State<'_, AppState>) -> Result<Connected, Failure> {
+    let mut active = state.active.lock().await;
+    if !active.all.iter().any(|session| session.device.id == id) {
+        return Err(Failure::new("not-connected", None));
+    }
+    active.current = Some(id);
+    Ok(active.connected())
 }
 
 /// Removes a NAS from the list and its entry from the keychain.

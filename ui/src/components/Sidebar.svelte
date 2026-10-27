@@ -1,29 +1,91 @@
 <script lang="ts">
-  import ArrowLeftRight from '@lucide/svelte/icons/arrow-left-right';
+  import Check from '@lucide/svelte/icons/check';
+  import ChevronDown from '@lucide/svelte/icons/chevron-down';
+  import LogOut from '@lucide/svelte/icons/log-out';
+  import Plus from '@lucide/svelte/icons/plus';
   import SettingsIcon from '@lucide/svelte/icons/settings';
   import ShieldAlert from '@lucide/svelte/icons/shield-alert';
   import icon from '../../../assets/branding/icon.svg';
   import { t } from '../lib/i18n.svelte';
   import { sections, type SectionId } from '../lib/sections';
 
+  interface Device {
+    id: string;
+    name: string;
+    model: string;
+  }
+
   let {
     device,
+    devices = [],
     section = $bindable(),
     ondisconnect,
+    onswitch,
+    onadd,
   }: {
-    device: { name: string; model: string };
+    device: Device;
+    /** Every signed-in NAS; the switcher appears when there is more than the demo. */
+    devices?: Device[];
     section: SectionId | 'settings';
     ondisconnect: () => void;
+    onswitch?: (id: string) => void;
+    onadd?: () => void;
   } = $props();
+
+  let menuOpen = $state(false);
 </script>
 
 <aside class="sidebar">
-  <div class="device">
-    <img src={icon} alt="" width="36" height="36" />
-    <div class="device-text">
-      <strong>{device.name}</strong>
-      <span class="subtle">{device.model}</span>
-    </div>
+  <div class="switcher">
+    <button
+      class="device"
+      aria-expanded={menuOpen}
+      aria-haspopup="menu"
+      title={t('nav-switch')}
+      disabled={!onadd}
+      onclick={() => (menuOpen = !menuOpen)}
+    >
+      <img src={icon} alt="" width="36" height="36" />
+      <span class="device-text">
+        <strong>{device.name}</strong>
+        <span class="subtle">{device.model}</span>
+      </span>
+      {#if onadd}<span class="chevron"><ChevronDown size={16} aria-hidden="true" /></span>{/if}
+    </button>
+    {#if menuOpen && onadd}
+      <div class="menu" role="menu">
+        {#each devices as entry (entry.id)}
+          <button
+            class="menu-item"
+            role="menuitemradio"
+            aria-checked={entry.id === device.id}
+            onclick={() => {
+              menuOpen = false;
+              if (entry.id !== device.id) onswitch?.(entry.id);
+            }}
+          >
+            <span class="mark"
+              >{#if entry.id === device.id}<Check size={14} aria-hidden="true" />{/if}</span
+            >
+            <span class="menu-text">
+              <strong>{entry.name}</strong>
+              <span class="subtle">{entry.model}</span>
+            </span>
+          </button>
+        {/each}
+        <button
+          class="menu-item"
+          role="menuitem"
+          onclick={() => {
+            menuOpen = false;
+            onadd();
+          }}
+        >
+          <span class="mark"><Plus size={14} aria-hidden="true" /></span>
+          <span class="menu-text">{t('nav-add')}</span>
+        </button>
+      </div>
+    {/if}
   </div>
 
   <nav aria-label={t('nav-label')}>
@@ -56,7 +118,7 @@
       <span class="label">{t('nav-settings')}</span>
     </button>
     <button class="nav-item" title={t('nav-disconnect')} onclick={ondisconnect}>
-      <ArrowLeftRight size={18} strokeWidth={1.8} aria-hidden="true" />
+      <LogOut size={18} strokeWidth={1.8} aria-hidden="true" />
       <span class="label">{t('nav-disconnect')}</span>
     </button>
   </div>
@@ -73,11 +135,83 @@
     overflow-y: auto;
   }
 
+  .switcher {
+    position: relative;
+  }
+
   .device {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 4px 8px 8px;
+    width: 100%;
+    padding: 6px 8px;
+    border: none;
+    border-radius: var(--nav-radius);
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .device:hover:not(:disabled) {
+    background: var(--hover);
+  }
+
+  .device:disabled {
+    cursor: default;
+  }
+
+  .chevron {
+    display: flex;
+    margin-left: auto;
+    color: var(--text-3);
+  }
+
+  .menu {
+    position: absolute;
+    z-index: 10;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 4px;
+    border-radius: var(--radius-card);
+    background: var(--card);
+    box-shadow:
+      0 0 0 1px var(--card-border),
+      0 12px 30px rgb(0 0 0 / 0.25);
+  }
+
+  .menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border: none;
+    border-radius: var(--radius-control);
+    background: transparent;
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .menu-item:hover {
+    background: var(--hover);
+  }
+
+  .mark {
+    display: flex;
+    flex: none;
+    width: 16px;
+    color: var(--accent);
+  }
+
+  .menu-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.25;
   }
 
   .device-text {

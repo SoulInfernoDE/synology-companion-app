@@ -15,7 +15,9 @@ nav-ssh = SSH
 nav-extensions = Erweiterungen
 nav-nextcloud = Nextcloud
 nav-settings = Einstellungen
-nav-disconnect = NAS wechseln
+nav-disconnect = Verbindung trennen
+nav-switch = NAS wechseln
+nav-add = Weiteres NAS verbinden
 nav-expert = Experte
 
 ## Startbildschirm
@@ -35,6 +37,7 @@ welcome-manual = Adresse eingeben
 welcome-manual-placeholder = IP-Adresse oder Hostname, z. B. 192.168.1.20 oder nas.local:5001
 welcome-manual-invalid = Das ist keine gültige Adresse.
 welcome-demo = Ohne NAS ausprobieren
+welcome-back = Zurück
 welcome-demo-hint = Zeigt Beispieldaten. Es wird nichts verschickt.
 welcome-browser-only = Das ist die Browser-Vorschau. Starte die App, um dich mit einem NAS zu verbinden; hier kannst du die Beispieldaten ausprobieren.
 
