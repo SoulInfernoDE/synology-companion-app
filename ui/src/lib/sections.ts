@@ -23,13 +23,7 @@ export interface Section {
 
 export const sections: readonly Section[] = [
   { id: 'overview', label: 'nav-overview', icon: LayoutDashboard },
-  {
-    id: 'files',
-    label: 'nav-files',
-    icon: FolderOpen,
-    planned: '0.2',
-    description: 'planned-files',
-  },
+  { id: 'files', label: 'nav-files', icon: FolderOpen },
   {
     id: 'packages',
     label: 'nav-packages',

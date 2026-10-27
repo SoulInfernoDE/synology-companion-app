@@ -13,6 +13,8 @@ export interface FoundNas {
   host: string;
   port: number;
   dsm: string | null;
+  /** MAC address of the answering port, for Wake-on-LAN. */
+  mac: string | null;
 }
 
 export interface KnownDevice {
@@ -24,6 +26,7 @@ export interface KnownDevice {
   account: string;
   fingerprint?: string;
   rememberLogin: boolean;
+  mac?: string;
 }
 
 /** An error from the core: `key` selects the message `error-<key>`. */
@@ -43,6 +46,7 @@ export interface ConnectRequest {
   rememberDevice: boolean;
   rememberLogin: boolean;
   trustFingerprint?: string;
+  mac?: string;
 }
 
 export type ConnectOutcome =
@@ -108,6 +112,7 @@ export interface CompleteSetupRequest {
   timeZone: string;
   updates: UpdatePolicy;
   rememberLogin: boolean;
+  mac?: string;
 }
 
 export interface SetupFinished {
@@ -115,7 +120,47 @@ export interface SetupFinished {
   skipped: string[];
 }
 
+export interface DsmUpdate {
+  version: string;
+  needsReboot: boolean;
+}
+
+export interface PackageUpdate {
+  id: string;
+  name: string;
+  installed: string;
+  available: string;
+}
+
+/** `dsmChecked: false` or `packages: null` mean DSM could not be asked. */
+export interface Updates {
+  dsmChecked: boolean;
+  /** `null` after a successful check: DSM is up to date. */
+  dsm: DsmUpdate | null;
+  packages: PackageUpdate[] | null;
+}
+
+export interface Share {
+  name: string;
+  description: string;
+  smbName: string;
+  encrypted: boolean;
+}
+
+export interface Shares {
+  shares: Share[];
+  smbEnabled: boolean | null;
+}
+
+export type PowerAction = 'reboot' | 'shutdown';
+
 export const discover = () => invoke<FoundNas[]>('discover');
+export const updates = () => invoke<Updates>('updates');
+export const shares = () => invoke<Shares>('shares');
+export const stopBeep = () => invoke<void>('stop_beep');
+export const power = (action: PowerAction) => invoke<void>('power', { action });
+export const openShare = (name: string) => invoke<void>('open_share', { name });
+export const wake = (id: string) => invoke<void>('wake', { id });
 export const probe = (request: ProbeRequest) => invoke<ProbeOutcome>('probe', { request });
 export const beginSetup = (request: ProbeRequest) => invoke<SetupInfo>('begin_setup', { request });
 export const completeSetup = (request: CompleteSetupRequest) =>

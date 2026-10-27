@@ -14,7 +14,7 @@ import type {
   ProbeRequest,
   SetupInfo,
 } from './backend';
-import { demoOverview } from './nas';
+import { demoOverview, demoShares, demoUpdates } from './nas';
 
 const FINGERPRINT = Array.from({ length: 32 }, (_, i) =>
   ((i * 37 + 11) % 256).toString(16).padStart(2, '0'),
@@ -23,8 +23,22 @@ const FINGERPRINT = Array.from({ length: 32 }, (_, i) =>
   .toUpperCase();
 
 const found: FoundNas[] = [
-  { name: 'nas-home', model: 'DS923+', host: '192.168.1.20', port: 5001, dsm: '7.4' },
-  { name: 'vdsm-test', model: 'VirtualDSM', host: '192.168.1.42', port: 5001, dsm: '7.4' },
+  {
+    name: 'nas-home',
+    model: 'DS923+',
+    host: '192.168.1.20',
+    port: 5001,
+    dsm: '7.4',
+    mac: '02:00:00:00:00:20',
+  },
+  {
+    name: 'vdsm-test',
+    model: 'VirtualDSM',
+    host: '192.168.1.42',
+    port: 5001,
+    dsm: '7.4',
+    mac: null,
+  },
 ];
 const unconfigured = new Set(['192.168.1.42']);
 let saved: KnownDevice[] = [];
@@ -59,6 +73,7 @@ async function connect(request: ConnectRequest): Promise<ConnectOutcome> {
     account: request.account,
     fingerprint: FINGERPRINT,
     rememberLogin: request.rememberLogin,
+    mac: request.mac,
   };
   saved = [device, ...saved.filter((known) => known.id !== device.id)];
   connected = true;
@@ -123,8 +138,16 @@ const commands: Record<string, (args: Record<string, unknown>) => Promise<unknow
   connect: (args) => connect(args.request as ConnectRequest),
   overview: async () => {
     if (!connected) throw { key: 'not-connected' };
-    return { ...demoOverview, kernel: null, updates: null };
+    return { ...demoOverview, kernel: null };
   },
+  updates: async () => (await wait(1500), demoUpdates),
+  shares: async () => demoShares,
+  stop_beep: async () => undefined,
+  power: async () => {
+    connected = false;
+  },
+  open_share: async () => undefined,
+  wake: async () => undefined,
   disconnect: async () => {
     connected = false;
   },

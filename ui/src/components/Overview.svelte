@@ -13,9 +13,25 @@
   import Meter from './Meter.svelte';
   import { bytes, celsius, duration, percent, rate } from '../lib/format';
   import { t } from '../lib/i18n.svelte';
+  import type { Snippet } from 'svelte';
+  import type { Updates } from '../lib/backend';
   import type { Health, Overview } from '../lib/nas';
 
-  let { overview, name, demo }: { overview: Overview; name: string; demo: boolean } = $props();
+  let {
+    overview,
+    name,
+    demo,
+    updates = undefined,
+    actions = undefined,
+  }: {
+    overview: Overview;
+    name: string;
+    demo: boolean;
+    /** `undefined` while the check runs; `null` when it failed. */
+    updates?: Updates | null;
+    /** Buttons beside the health badge, e.g. restart and shut down. */
+    actions?: Snippet;
+  } = $props();
 
   /** Link speeds in Mbit/s, shown as Gbit/s from 1000 on. */
   function speed(mbps: number): string {
@@ -58,7 +74,10 @@
       </p>
       <p class="subtle">{t('overview-uptime', { duration: duration(overview.uptimeSeconds) })}</p>
     </div>
-    <span class="badge {badgeClass[overall]}">{t(`health-${overall}`)}</span>
+    <div class="header-side">
+      <span class="badge {badgeClass[overall]}">{t(`health-${overall}`)}</span>
+      {@render actions?.()}
+    </div>
   </header>
 
   {#if demo}
@@ -167,19 +186,49 @@
       </ul>
     </section>
 
-    {#if overview.updates}
-      <section class="card">
-        <h2><RefreshCw size={16} aria-hidden="true" /> {t('overview-updates')}</h2>
+    <section class="card">
+      <h2><RefreshCw size={16} aria-hidden="true" /> {t('overview-updates')}</h2>
+      {#if updates === undefined}
+        <p class="subtle">{t('overview-updates-checking')}</p>
+      {:else if updates === null}
+        <p class="subtle">{t('overview-updates-failed')}</p>
+      {:else}
         <ul class="list">
           <li>
-            {overview.updates.dsm
-              ? t('overview-update-dsm', { version: overview.updates.dsm })
-              : t('overview-update-dsm-none')}
+            {#if !updates.dsmChecked}
+              <span class="subtle">{t('overview-update-dsm-unknown')}</span>
+            {:else if updates.dsm}
+              <strong>{t('overview-update-dsm', { version: updates.dsm.version })}</strong>
+              {#if updates.dsm.needsReboot}
+                <span class="subtle block">{t('overview-update-reboot')}</span>
+              {/if}
+            {:else}
+              {t('overview-update-dsm-none')}
+            {/if}
           </li>
-          <li>{t('overview-update-packages', { count: overview.updates.packages })}</li>
+          <li>
+            {#if updates.packages === null}
+              <span class="subtle">{t('overview-update-packages-unknown')}</span>
+            {:else}
+              {t('overview-update-packages', { count: updates.packages.length })}
+              {#if updates.packages.length > 0}
+                <ul class="packages">
+                  {#each updates.packages as update (update.id)}
+                    <li>
+                      {update.name}
+                      <span class="subtle">{update.installed} → {update.available}</span>
+                    </li>
+                  {/each}
+                </ul>
+              {/if}
+            {/if}
+          </li>
         </ul>
-      </section>
-    {/if}
+        {#if updates.dsm || (updates.packages?.length ?? 0) > 0}
+          <p class="subtle hint">{t('overview-update-install-hint')}</p>
+        {/if}
+      {/if}
+    </section>
   </div>
 
   <section class="card">
@@ -230,6 +279,33 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: 16px;
+  }
+
+  .header-side {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .packages {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 6px 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.92em;
+  }
+
+  .list .packages li {
+    padding: 0;
+    border: none;
+  }
+
+  .block {
+    display: block;
   }
 
   .demo-note {

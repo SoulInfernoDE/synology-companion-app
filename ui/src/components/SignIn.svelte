@@ -7,6 +7,8 @@
     model?: string;
     account?: string;
     rememberLogin?: boolean;
+    /** MAC address from discovery, kept for Wake-on-LAN. */
+    mac?: string | null;
   }
 </script>
 
@@ -65,6 +67,7 @@
         rememberDevice,
         rememberLogin,
         trustFingerprint,
+        mac: target.mac ?? undefined,
       });
       switch (outcome.status) {
         case 'connected':

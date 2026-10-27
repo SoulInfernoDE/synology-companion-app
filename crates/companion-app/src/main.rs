@@ -12,6 +12,7 @@ use tauri::Manager;
 
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             // A second start brings the running window to the front instead.
             if let Some(window) = app.get_webview_window("main") {
@@ -32,6 +33,12 @@ fn main() {
             commands::overview,
             commands::disconnect,
             commands::forget_device,
+            commands::updates,
+            commands::shares,
+            commands::stop_beep,
+            commands::power,
+            commands::open_share,
+            commands::wake,
             setup::probe,
             setup::begin_setup,
             setup::complete_setup,

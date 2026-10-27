@@ -3,10 +3,11 @@
   import Overview from './components/Overview.svelte';
   import Planned from './components/Planned.svelte';
   import Settings from './components/Settings.svelte';
+  import Shares from './components/Shares.svelte';
   import Sidebar from './components/Sidebar.svelte';
   import Welcome from './components/Welcome.svelte';
   import { disconnect, type Failure, type KnownDevice } from './lib/backend';
-  import { demoDevices, demoOverview } from './lib/nas';
+  import { demoDevices, demoOverview, demoUpdates } from './lib/nas';
   import { sections, type SectionId } from './lib/sections';
   import { persistAndApply } from './lib/settings.svelte';
 
@@ -56,10 +57,12 @@
         <Settings />
       {:else if section === 'overview'}
         {#if current.demo}
-          <Overview overview={demoOverview} name={current.name} demo />
+          <Overview overview={demoOverview} name={current.name} demo updates={demoUpdates} />
         {:else}
           <LiveOverview name={current.name} onlost={leave} />
         {/if}
+      {:else if section === 'files'}
+        <Shares demo={current.demo} />
       {:else if planned}
         <Planned section={planned} />
       {/if}

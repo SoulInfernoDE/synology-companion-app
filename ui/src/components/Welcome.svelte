@@ -3,12 +3,14 @@
   import Info from '@lucide/svelte/icons/info';
   import RefreshCw from '@lucide/svelte/icons/refresh-cw';
   import Server from '@lucide/svelte/icons/server';
+  import Power from '@lucide/svelte/icons/power';
   import Trash from '@lucide/svelte/icons/trash-2';
   import icon from '../../../assets/branding/icon.svg';
   import SignIn, { type SignInTarget } from './SignIn.svelte';
   import {
     discover,
     forgetDevice,
+    wake,
     hasCore,
     knownDevices,
     parseAddress,
@@ -58,6 +60,17 @@
 
   // Removal is confirmed inline; system dialogs do not work in every WebView.
   let forgetting = $state<string | null>(null);
+  /** Feedback after a Wake-on-LAN packet, per device. */
+  let woken = $state<Record<string, string>>({});
+
+  async function wakeDevice(device: KnownDevice) {
+    try {
+      await wake(device.id);
+      woken[device.id] = t('welcome-wake-sent');
+    } catch (error) {
+      woken[device.id] = t(`error-${toFailure(error).key}`);
+    }
+  }
 
   async function forget(device: KnownDevice) {
     forgetting = null;
@@ -121,7 +134,20 @@
                       .filter(Boolean)
                       .join(' · ')}
                   </span>
+                  {#if woken[device.id]}
+                    <span class="subtle" role="status">{woken[device.id]}</span>
+                  {/if}
                 </div>
+                {#if device.mac}
+                  <button
+                    class="icon-button wake"
+                    title={t('welcome-wake')}
+                    aria-label={t('welcome-wake')}
+                    onclick={() => wakeDevice(device)}
+                  >
+                    <Power size={16} aria-hidden="true" />
+                  </button>
+                {/if}
                 <button
                   class="icon-button"
                   title={t('welcome-forget')}
@@ -164,7 +190,13 @@
               <button
                 class="button"
                 onclick={() =>
-                  (target = { host: nas.host, port: nas.port, name: nas.name, model: nas.model })}
+                  (target = {
+                    host: nas.host,
+                    port: nas.port,
+                    name: nas.name,
+                    model: nas.model,
+                    mac: nas.mac,
+                  })}
               >
                 {t('welcome-connect')}
               </button>
@@ -333,6 +365,10 @@
   .icon-button:hover {
     background: var(--hover);
     color: var(--danger);
+  }
+
+  .icon-button.wake:hover {
+    color: var(--success);
   }
 
   .manual {

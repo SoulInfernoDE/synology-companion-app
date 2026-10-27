@@ -101,6 +101,8 @@ pub struct CompleteSetupRequest {
     updates: UpdatePolicy,
     #[serde(default)]
     remember_login: bool,
+    /// MAC address from discovery, kept for Wake-on-LAN.
+    mac: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -150,6 +152,7 @@ pub async fn complete_setup(
         account,
         fingerprint: pending.fingerprint,
         remember_login: request.remember_login,
+        mac: request.mac,
     };
     let device = activate(
         &state,

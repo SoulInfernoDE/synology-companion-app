@@ -5,6 +5,7 @@
 //! after the user trusted them (see [`tls`]).
 
 mod cpu;
+mod manage;
 mod overview;
 mod setup;
 pub mod tls;
@@ -16,6 +17,7 @@ use serde::Deserialize;
 use serde_json::Value;
 use url::Url;
 
+pub use manage::{DsmUpdate, PackageUpdate, Share, Shares, Updates};
 pub use overview::{Drive, DriveKind, Health, NetworkPort, Overview, Volume};
 pub use setup::{
     PasswordRules, SetupDone, SetupInfo, SetupRequest, SetupState, TimeZone, UpdatePolicy,
@@ -28,10 +30,16 @@ const SESSION_NAME: &str = "SynoCompanion";
 /// APIs this client uses, looked up once per sign-in.
 const APIS: &[&str] = &[
     "SYNO.API.Auth",
+    "SYNO.Core.FileServ.SMB",
+    "SYNO.Core.Hardware.BeepControl",
     "SYNO.Core.Network",
     "SYNO.Core.Network.Ethernet",
+    "SYNO.Core.Package",
+    "SYNO.Core.Package.Server",
+    "SYNO.Core.Share",
     "SYNO.Core.System",
     "SYNO.Core.System.Utilization",
+    "SYNO.Core.Upgrade.Server",
     "SYNO.Storage.CGI.Storage",
 ];
 

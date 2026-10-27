@@ -86,7 +86,6 @@ drive-nvme = NVMe SSD
 ## Planned sections
 
 planned-version = Planned for version { $version }
-planned-files = Mount shared folders in your file manager with one click, on Linux, macOS and Windows.
 planned-packages = Add community package sources such as SynoCommunity, then browse and install their packages.
 planned-ssh = Set up SSH with a key, so the app can work on the NAS without asking for a password each time.
 planned-extensions = Community scripts as safe recipes: see every command first, back up, apply, undo. Third-party drives come first.
@@ -218,3 +217,43 @@ setup-done = The NAS is set up
 setup-skipped = DSM did not accept some of the optional settings. You can change them later in DSM:
 setup-continue = Continue
 error-setup-expired = The setup form was open too long. Please start the setup again.
+
+## Updates
+
+overview-updates-checking = Checking for updates …
+overview-updates-failed = Updates could not be checked.
+overview-update-dsm-unknown = DSM could not check for a new version; the NAS may have no internet access.
+overview-update-reboot = The NAS restarts during this update.
+overview-update-packages-unknown = Package updates could not be checked.
+overview-update-install-hint = Install updates in DSM (Control Panel › Update & Restore, Package Center).
+
+## Power
+
+power-beep = Silence the beeper
+power-beep-stopped = The beeper is silent.
+power-reboot = Restart
+power-shutdown = Shut down
+power-reboot-title = Restart the NAS?
+power-reboot-text = Everyone using the NAS loses the connection for a few minutes. Running copies and backups stop.
+power-shutdown-title = Shut down the NAS?
+power-shutdown-text = The NAS switches off. It stays off until someone presses its power button or wakes it over the network (Wake-on-LAN).
+error-rebooting = The NAS is restarting. Connect again in a few minutes.
+error-shutting-down = The NAS is shutting down.
+
+## Shared folders
+
+shares-intro = Open a shared folder in your file manager. You sign in there with your DSM account.
+shares-smb-off = The SMB service is off on this NAS. Turn it on in DSM (Control Panel › File Services › SMB) to open shared folders.
+shares-none = This account sees no shared folders.
+shares-encrypted = Encrypted
+shares-open = Open
+shares-hint = Linux and macOS mount the folder through smb://, Windows opens it in Explorer.
+shares-demo = Sample data. Connect a NAS to open its shared folders.
+error-open-share = The shared folder could not be opened.
+
+## Wake-on-LAN
+
+welcome-wake = Wake up (Wake-on-LAN)
+welcome-wake-sent = Wake-up sent. If the NAS stays off, turn on Wake-on-LAN in DSM (Control Panel › Hardware & Power).
+error-wake-no-mac = The MAC address of this NAS is not known yet; search the network once while it is on.
+error-wake = The wake-up could not be sent.

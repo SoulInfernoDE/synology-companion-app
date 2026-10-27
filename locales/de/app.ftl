@@ -86,7 +86,6 @@ drive-nvme = NVMe-SSD
 ## Geplante Bereiche
 
 planned-version = Geplant für Version { $version }
-planned-files = Freigaben mit einem Klick im Dateimanager einbinden, unter Linux, macOS und Windows.
 planned-packages = Community-Paketquellen wie SynoCommunity hinzufügen, ihre Pakete durchsuchen und installieren.
 planned-ssh = SSH mit Schlüssel einrichten, damit die App auf dem NAS arbeiten kann, ohne jedes Mal nach dem Passwort zu fragen.
 planned-extensions = Community-Skripte als sichere Rezepte: jeden Befehl vorher sehen, sichern, anwenden, rückgängig machen. Festplatten von Drittanbietern kommen zuerst.
@@ -218,3 +217,43 @@ setup-done = Das NAS ist eingerichtet
 setup-skipped = Einige der optionalen Einstellungen hat DSM nicht übernommen. Du kannst sie später in DSM ändern:
 setup-continue = Weiter
 error-setup-expired = Das Einrichtungsformular war zu lange offen. Bitte starte die Einrichtung erneut.
+
+## Updates
+
+overview-updates-checking = Updates werden geprüft …
+overview-updates-failed = Die Updates konnten nicht geprüft werden.
+overview-update-dsm-unknown = DSM konnte nicht nach einer neuen Version suchen; vielleicht hat das NAS keinen Internetzugang.
+overview-update-reboot = Bei diesem Update startet das NAS neu.
+overview-update-packages-unknown = Paket-Updates konnten nicht geprüft werden.
+overview-update-install-hint = Updates installierst du in DSM (Systemsteuerung › Aktualisieren & Wiederherstellen, Paket-Zentrum).
+
+## Ein/Aus
+
+power-beep = Piepton abschalten
+power-beep-stopped = Der Piepton ist aus.
+power-reboot = Neu starten
+power-shutdown = Herunterfahren
+power-reboot-title = NAS neu starten?
+power-reboot-text = Alle, die das NAS nutzen, verlieren für einige Minuten die Verbindung. Laufende Kopien und Sicherungen brechen ab.
+power-shutdown-title = NAS herunterfahren?
+power-shutdown-text = Das NAS schaltet sich aus. Es bleibt aus, bis jemand den Einschaltknopf drückt oder es über das Netzwerk weckt (Wake-on-LAN).
+error-rebooting = Das NAS startet neu. Verbinde dich in einigen Minuten wieder.
+error-shutting-down = Das NAS fährt herunter.
+
+## Freigaben
+
+shares-intro = Öffne einen freigegebenen Ordner in deinem Dateimanager. Dort meldest du dich mit deinem DSM-Konto an.
+shares-smb-off = Der SMB-Dienst ist auf diesem NAS aus. Schalte ihn in DSM ein (Systemsteuerung › Dateidienste › SMB), um Freigaben zu öffnen.
+shares-none = Dieses Konto sieht keine freigegebenen Ordner.
+shares-encrypted = Verschlüsselt
+shares-open = Öffnen
+shares-hint = Linux und macOS binden den Ordner über smb:// ein, Windows öffnet ihn im Explorer.
+shares-demo = Beispieldaten. Verbinde ein NAS, um seine Freigaben zu öffnen.
+error-open-share = Die Freigabe konnte nicht geöffnet werden.
+
+## Wake-on-LAN
+
+welcome-wake = Aufwecken (Wake-on-LAN)
+welcome-wake-sent = Weckruf gesendet. Bleibt das NAS aus, schalte Wake-on-LAN in DSM ein (Systemsteuerung › Hardware & Energie).
+error-wake-no-mac = Die MAC-Adresse dieses NAS ist noch nicht bekannt; durchsuche einmal das Netzwerk, während es an ist.
+error-wake = Der Weckruf konnte nicht gesendet werden.

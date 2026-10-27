@@ -136,6 +136,7 @@
         timeZone,
         updates,
         rememberLogin,
+        mac: target.mac ?? undefined,
       });
       password = '';
       repeat = '';

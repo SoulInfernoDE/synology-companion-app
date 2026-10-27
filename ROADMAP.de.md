@@ -25,9 +25,10 @@ Jede Version ist für sich nutzbar. Funktionen, die das NAS über DSMs eigene Ei
 ## v0.2 – Steuern
 
 - [ ] Tray-Icon mit Status und Benachrichtigungen
-- [ ] Wake-on-LAN, Neustart, Herunterfahren, Piepton abschalten
-- [ ] Freigaben (SMB) im Dateimanager des jeweiligen Systems einbinden
-- [ ] Verfügbare DSM- und Paket-Updates
+- [x] Wake-on-LAN, Neustart, Herunterfahren, Piepton abschalten
+- [x] Freigaben (SMB) im Dateimanager des jeweiligen Systems öffnen
+- [x] Verfügbare DSM- und Paket-Updates
+- [ ] DSM- und Paket-Updates aus der App installieren
 - [ ] Mehrere NAS nebeneinander
 - [ ] Eigenständiger nachgebauter DSM-Server aus den aufgezeichneten Antworten, um die App ohne NAS auszuprobieren (die automatischen Tests nutzen sie schon)
 

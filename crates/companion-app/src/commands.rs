@@ -4,7 +4,7 @@ use std::sync::Mutex;
 use std::time::Duration;
 
 use companion_discovery::FoundNas;
-use companion_dsm::{AuthError, Client, Credentials, Error, Overview, Session};
+use companion_dsm::{AuthError, Client, Credentials, Error, Overview, Session, Shares, Updates};
 use serde::{Deserialize, Serialize};
 use tauri::State;
 use tauri::async_runtime::{Mutex as AsyncMutex, spawn_blocking};
@@ -76,11 +76,18 @@ pub(crate) fn device_name() -> String {
 }
 
 #[tauri::command]
-pub async fn discover() -> Result<Vec<FoundNas>, Failure> {
-    spawn_blocking(|| companion_discovery::browse(DISCOVERY_TIME))
+pub async fn discover(state: State<'_, AppState>) -> Result<Vec<FoundNas>, Failure> {
+    let found = spawn_blocking(|| companion_discovery::browse(DISCOVERY_TIME))
         .await
         .map_err(|error| Failure::new("unexpected", error.to_string()))?
-        .map_err(|error| Failure::new("discovery", error))
+        .map_err(|error| Failure::new("discovery", error))?;
+    // Saved NAS learn their MAC address from discovery, for Wake-on-LAN later.
+    if let Ok(mut store) = state.store.lock() {
+        for nas in found.iter().filter(|nas| nas.mac.is_some()) {
+            let _ = store.remember_mac(&nas.host, nas.mac.as_deref().unwrap_or_default());
+        }
+    }
+    Ok(found)
 }
 
 #[tauri::command]
@@ -110,6 +117,8 @@ pub struct ConnectRequest {
     remember_login: bool,
     /// Fingerprint of the certificate the user just agreed to trust.
     trust_fingerprint: Option<String>,
+    /// MAC address from discovery, kept for Wake-on-LAN.
+    mac: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -199,6 +208,9 @@ pub async fn connect(
         account: account.clone(),
         fingerprint: pin,
         remember_login: request.remember_login,
+        mac: request
+            .mac
+            .or_else(|| known.as_ref().and_then(|device| device.mac.clone())),
     };
     let remember_login = request.remember_login;
     let device = activate(&state, client, session, device, password, remember_login).await?;
@@ -256,43 +268,149 @@ pub(crate) async fn activate(
     Ok(device)
 }
 
-#[tauri::command]
-pub async fn overview(state: State<'_, AppState>) -> Result<Overview, Failure> {
-    let mut active = state.active.lock().await;
-    let current = active
-        .as_mut()
-        .ok_or_else(|| Failure::new("not-connected", None))?;
-    match current.client.overview(&current.session).await {
-        Err(Error::SessionExpired) => {
-            // DSM ends idle sessions; sign in again quietly when the keychain allows it.
-            let (id, account) = (current.device.id.clone(), current.device.account.clone());
-            let stored = keychain(move || secrets::load(&id, &account))
-                .await
-                .unwrap_or_default();
-            let Some(password) = stored.password else {
-                *active = None;
-                return Err(Failure::new("session-expired", None));
-            };
-            let credentials = Credentials {
-                account: current.device.account.clone(),
-                password,
-                device_token: stored.device_token,
-                device_name: device_name(),
-                ..Credentials::default()
-            };
-            match current.client.login(&credentials).await {
-                Ok(session) => {
-                    current.session = session;
-                    Ok(current.client.overview(&current.session).await?)
-                }
-                Err(_) => {
+/// Signs in again after DSM ended an idle session, when the keychain has the
+/// password. Returns whether a new session is in place.
+async fn relogin(current: &mut Active) -> bool {
+    let (id, account) = (current.device.id.clone(), current.device.account.clone());
+    let stored = keychain(move || secrets::load(&id, &account))
+        .await
+        .unwrap_or_default();
+    let Some(password) = stored.password else {
+        return false;
+    };
+    let credentials = Credentials {
+        account: current.device.account.clone(),
+        password,
+        device_token: stored.device_token,
+        device_name: device_name(),
+        ..Credentials::default()
+    };
+    match current.client.login(&credentials).await {
+        Ok(session) => {
+            current.session = session;
+            true
+        }
+        Err(_) => false,
+    }
+}
+
+/// Runs a call on the active NAS. When DSM has ended the session, it signs in
+/// again quietly and repeats the call once.
+macro_rules! on_nas {
+    ($state:expr, |$client:ident, $session:ident| $call:expr) => {{
+        let mut active = $state.active.lock().await;
+        let current = active
+            .as_mut()
+            .ok_or_else(|| Failure::new("not-connected", None))?;
+        let first = {
+            let ($client, $session) = (&current.client, &current.session);
+            $call.await
+        };
+        match first {
+            Err(Error::SessionExpired) => {
+                if relogin(current).await {
+                    let ($client, $session) = (&current.client, &current.session);
+                    $call.await.map_err(Failure::from)
+                } else {
                     *active = None;
                     Err(Failure::new("session-expired", None))
                 }
             }
+            other => other.map_err(Failure::from),
         }
-        result => Ok(result?),
+    }};
+}
+
+#[tauri::command]
+pub async fn overview(state: State<'_, AppState>) -> Result<Overview, Failure> {
+    on_nas!(state, |client, session| client.overview(session))
+}
+
+#[tauri::command]
+pub async fn updates(state: State<'_, AppState>) -> Result<Updates, Failure> {
+    on_nas!(state, |client, session| async {
+        Ok::<_, Error>(client.updates(session).await)
+    })
+}
+
+#[tauri::command]
+pub async fn shares(state: State<'_, AppState>) -> Result<Shares, Failure> {
+    on_nas!(state, |client, session| client.shares(session))
+}
+
+#[tauri::command]
+pub async fn stop_beep(state: State<'_, AppState>) -> Result<(), Failure> {
+    on_nas!(state, |client, session| client.stop_beep(session))
+}
+
+#[derive(Debug, Clone, Copy, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum Power {
+    Reboot,
+    Shutdown,
+}
+
+/// Restarts or shuts down the active NAS. The session ends with it.
+#[tauri::command]
+pub async fn power(action: Power, state: State<'_, AppState>) -> Result<(), Failure> {
+    on_nas!(state, |client, session| async {
+        match action {
+            Power::Reboot => client.reboot(session).await,
+            Power::Shutdown => client.shutdown(session).await,
+        }
+    })?;
+    state.active.lock().await.take();
+    Ok(())
+}
+
+/// Opens a shared folder of the active NAS in the system's file manager over SMB.
+#[tauri::command]
+pub async fn open_share(
+    name: String,
+    app: tauri::AppHandle,
+    state: State<'_, AppState>,
+) -> Result<(), Failure> {
+    use tauri_plugin_opener::OpenerExt;
+
+    let host = state
+        .active
+        .lock()
+        .await
+        .as_ref()
+        .map(|current| current.device.host.clone())
+        .ok_or_else(|| Failure::new("not-connected", None))?;
+    if name.is_empty() || name.contains(['/', '\\']) {
+        return Err(Failure::new(
+            "unexpected",
+            format!("invalid share name {name:?}"),
+        ));
     }
+    // Windows opens UNC paths in Explorer; the other systems hand smb:// URLs to
+    // their file manager (Finder, Nautilus, Nemo, Dolphin), which mounts the share.
+    let result = if cfg!(windows) {
+        app.opener()
+            .open_path(format!(r"\\{host}\{name}"), None::<&str>)
+    } else {
+        app.opener()
+            .open_url(format!("smb://{host}/{name}"), None::<&str>)
+    };
+    result.map_err(|error| Failure::new("open-share", error.to_string()))
+}
+
+/// Sends Wake-on-LAN to a saved NAS whose MAC address discovery has seen.
+#[tauri::command]
+pub fn wake(id: String, state: State<'_, AppState>) -> Result<(), Failure> {
+    let device = state
+        .store
+        .lock()
+        .ok()
+        .and_then(|store| store.get(&id).cloned())
+        .ok_or_else(|| Failure::new("unexpected", "unknown device".to_owned()))?;
+    let mac = device
+        .mac
+        .ok_or_else(|| Failure::new("wake-no-mac", None))?;
+    companion_discovery::wake(&mac, device.host.parse().ok())
+        .map_err(|error| Failure::new("wake", error))
 }
 
 #[tauri::command]

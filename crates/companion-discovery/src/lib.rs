@@ -11,7 +11,10 @@ use std::time::{Duration, Instant};
 use mdns_sd::{ServiceDaemon, ServiceEvent};
 
 mod findhost;
+mod wake;
+
 use serde::Serialize;
+pub use wake::wake;
 
 const SERVICE: &str = "_http._tcp.local.";
 const DEFAULT_HTTPS_PORT: u16 = 5001;
@@ -29,6 +32,9 @@ pub struct FoundNas {
     pub port: u16,
     /// "7.3" when DSM announces its version.
     pub dsm: Option<String>,
+    /// MAC address of the answering network port, for Wake-on-LAN. DSM's Web API
+    /// does not report it, only the discovery protocols do.
+    pub mac: Option<String>,
 }
 
 /// Turns one announced service into a NAS, or `None` when it is not a Synology one.
@@ -62,6 +68,7 @@ fn from_record<'a>(
             .and_then(|port| port.parse().ok())
             .unwrap_or(DEFAULT_HTTPS_PORT),
         dsm,
+        mac: txt("mac_address").map(str::to_owned),
     })
 }
 
@@ -105,6 +112,9 @@ fn merge(found: &mut Vec<FoundNas>, answers: Vec<findhost::Answer>) {
             if answer.dsm_version.is_some() {
                 known.dsm = answer.dsm_version;
             }
+            if known.mac.is_none() {
+                known.mac = answer.mac;
+            }
             continue;
         }
         found.push(FoundNas {
@@ -112,6 +122,7 @@ fn merge(found: &mut Vec<FoundNas>, answers: Vec<findhost::Answer>) {
             model: answer.model.unwrap_or_default(),
             port: answer.https_port.unwrap_or(DEFAULT_HTTPS_PORT),
             dsm: answer.dsm_version,
+            mac: answer.mac,
             host,
         });
     }
@@ -182,6 +193,7 @@ mod tests {
                 host: "192.168.1.20".into(),
                 port: 5551,
                 dsm: Some("7.3".into()),
+                mac: None,
             }
         );
     }
@@ -194,6 +206,7 @@ mod tests {
             host: "192.168.1.20".into(),
             port: 5001,
             dsm: Some("7.4".into()),
+            mac: None,
         }];
         merge(
             &mut found,

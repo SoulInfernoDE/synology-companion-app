@@ -68,6 +68,13 @@ Until DSM's welcome wizard has run, DSM hands an administrator session to whoeve
 
 Afterwards the app signs in with the new account and sets updates, time zone, usage statistics (off) and hides DSM's welcome wizard. These later settings are optional; any DSM refuses are listed, the setup still counts as done.
 
+## Managing a NAS
+
+- **Updates:** DSM offers its next version through `SYNO.Core.Upgrade.Server check`. For packages there is no single call: the app compares the installed versions (`SYNO.Core.Package list`) with Package Center's catalogue (`SYNO.Core.Package.Server list`), the way Package Center does. The check asks Synology's servers, so the app runs it on opening and then every half hour.
+- **Power:** restart and shut down use `SYNO.Core.System reboot`/`shutdown` without `force`, so DSM refuses while a task must not be interrupted; the beeper is silenced with `SYNO.Core.Hardware.BeepControl stop_beep`.
+- **Wake-on-LAN:** DSM's Web API reports no MAC address, but Bonjour and findhostd do. The app keeps the MAC of a saved NAS from discovery and sends the magic packet to the whole network and to the NAS's last /24 network, on ports 9 and 7.
+- **Shared folders** come from `SYNO.Core.Share list`; hidden ones stay hidden. They open over SMB in the system's file manager: `smb://` URLs on Linux and macOS, `\\host\share` in Explorer on Windows. DSM serves the folder `homes` as `home`, the user's own home folder.
+
 ## Skins
 
 A skin is a set of CSS custom properties plus a few shape rules (corner radius, font, control height, focus style). The UI sets `data-skin="linux|macos|windows"` and `data-scheme="light|dark"` on `<html>`. By default the skin follows the operating system the app runs on and the scheme follows the system setting; both can be overridden in the settings. Components only use the tokens, never fixed colors, so a new skin is one CSS block.

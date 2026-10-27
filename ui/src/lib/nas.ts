@@ -1,6 +1,8 @@
 // What the interface knows about a NAS. The Rust core fills these from the DSM Web API;
 // in demo mode they come from `demoOverview`.
 
+import type { Shares, Updates } from './backend';
+
 export type Health = 'normal' | 'warning' | 'critical';
 
 export interface DemoNas {
@@ -42,7 +44,7 @@ export interface Drive {
   listed: boolean | null;
 }
 
-/** Mirrors `companion_dsm::Overview`; `kernel` and `updates` come with later versions. */
+/** Mirrors `companion_dsm::Overview`; `kernel` comes with a later version. */
 export interface Overview {
   model: string;
   dsm: string;
@@ -63,7 +65,6 @@ export interface Overview {
   networkPorts: NetworkPort[];
   volumes: Volume[];
   drives: Drive[];
-  updates?: { dsm: string | null; packages: number } | null;
 }
 
 const TB = 1000 ** 4;
@@ -156,5 +157,32 @@ export const demoOverview: Overview = {
       listed: false,
     },
   ],
-  updates: { dsm: '7.3.2-86009', packages: 3 },
+};
+
+export const demoUpdates: Updates = {
+  dsmChecked: true,
+  dsm: { version: '7.4.1-90080 Update 1', needsReboot: true },
+  packages: [
+    { id: 'SMBService', name: 'SMB Service', installed: '4.15.13-0871', available: '4.15.13-2503' },
+    {
+      id: 'SecureSignIn',
+      name: 'Secure SignIn Service',
+      installed: '1.1.5-0362',
+      available: '1.1.7-0455',
+    },
+  ],
+};
+
+export const demoShares: Shares = {
+  smbEnabled: true,
+  shares: [
+    {
+      name: 'homes',
+      description: "homes contains all users' home",
+      smbName: 'home',
+      encrypted: false,
+    },
+    { name: 'media', description: 'Photos, music and videos', smbName: 'media', encrypted: false },
+    { name: 'backup', description: '', smbName: 'backup', encrypted: true },
+  ],
 };

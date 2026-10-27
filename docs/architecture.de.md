@@ -68,6 +68,13 @@ Solange der Willkommensassistent von DSM nicht gelaufen ist, gibt DSM jedem, der
 
 Danach meldet sich die App mit dem neuen Konto an und setzt Updates, Zeitzone, Nutzungsstatistiken (aus) und blendet den Willkommensassistenten von DSM aus. Diese späteren Einstellungen sind optional; was DSM ablehnt, wird aufgelistet, die Einrichtung gilt trotzdem als erledigt.
 
+## Ein NAS verwalten
+
+- **Updates:** Seine nächste Version bietet DSM über `SYNO.Core.Upgrade.Server check` an. Für Pakete gibt es keinen einzelnen Aufruf: Die App vergleicht die installierten Versionen (`SYNO.Core.Package list`) mit dem Katalog des Paket-Zentrums (`SYNO.Core.Package.Server list`), so wie das Paket-Zentrum selbst. Die Prüfung fragt Synologys Server, deshalb läuft sie beim Öffnen und danach alle halbe Stunde.
+- **Ein/Aus:** Neustart und Herunterfahren nutzen `SYNO.Core.System reboot`/`shutdown` ohne `force`, damit DSM ablehnt, solange eine Aufgabe nicht unterbrochen werden darf; den Piepton schaltet `SYNO.Core.Hardware.BeepControl stop_beep` ab.
+- **Wake-on-LAN:** Die Web-API von DSM meldet keine MAC-Adresse, Bonjour und findhostd aber schon. Die App merkt sich die MAC eines gespeicherten NAS aus der Suche und schickt das Magic Packet ans ganze Netz und an das letzte /24-Netz des NAS, auf den Ports 9 und 7.
+- **Freigaben** kommen aus `SYNO.Core.Share list`; versteckte bleiben versteckt. Sie öffnen sich über SMB im Dateimanager des Systems: `smb://`-URLs unter Linux und macOS, `\\host\freigabe` im Explorer unter Windows. Den Ordner `homes` stellt DSM als `home` bereit, den eigenen Home-Ordner.
+
 ## Skins
 
 Ein Skin ist ein Satz CSS-Variablen plus einige Formregeln (Eckenradius, Schrift, Höhe der Bedienelemente, Fokusdarstellung). Die Oberfläche setzt `data-skin="linux|macos|windows"` und `data-scheme="light|dark"` auf `<html>`. Standardmäßig folgt der Skin dem Betriebssystem, auf dem die App läuft, und das Farbschema der Systemeinstellung; beides lässt sich in den Einstellungen überschreiben. Komponenten nutzen nur die Variablen, nie feste Farben, ein neuer Skin ist also ein einziger CSS-Block.

@@ -23,6 +23,9 @@ pub struct KnownDevice {
     /// The password is kept in the keychain.
     #[serde(default)]
     pub remember_login: bool,
+    /// MAC address seen by discovery, for Wake-on-LAN.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mac: Option<String>,
 }
 
 pub fn device_id(host: &str, port: u16) -> String {
@@ -62,6 +65,18 @@ impl DeviceStore {
         self.save()
     }
 
+    /// Notes the MAC address discovery saw for `host`; saves only when it changed.
+    pub fn remember_mac(&mut self, host: &str, mac: &str) -> io::Result<()> {
+        let mut changed = false;
+        for device in self.devices.iter_mut().filter(|device| device.host == host) {
+            if device.mac.as_deref() != Some(mac) {
+                device.mac = Some(mac.to_owned());
+                changed = true;
+            }
+        }
+        if changed { self.save() } else { Ok(()) }
+    }
+
     pub fn remove(&mut self, id: &str) -> io::Result<Option<KnownDevice>> {
         let index = self.devices.iter().position(|device| device.id == id);
         let removed = index.map(|index| self.devices.remove(index));
@@ -94,6 +109,7 @@ mod tests {
             account: "admin".into(),
             fingerprint: None,
             remember_login: false,
+            mac: None,
         }
     }
 
@@ -112,6 +128,17 @@ mod tests {
         let mut reloaded = reloaded;
         assert!(reloaded.remove("a:5001").unwrap().is_some());
         assert_eq!(DeviceStore::load(dir.path()).all().len(), 1);
+    }
+
+    #[test]
+    fn remembers_macs_by_host() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut store = DeviceStore::load(dir.path());
+        store.upsert(device("10.0.0.5")).unwrap();
+        store.remember_mac("10.0.0.5", "00:11:32:aa:bb:cc").unwrap();
+        store.remember_mac("10.0.0.9", "00:11:32:00:00:01").unwrap();
+        let reloaded = DeviceStore::load(dir.path());
+        assert_eq!(reloaded.all()[0].mac.as_deref(), Some("00:11:32:aa:bb:cc"));
     }
 
     #[test]
