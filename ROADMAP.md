@@ -24,7 +24,7 @@ Each version is usable on its own. Features that change the NAS beyond DSM's own
 
 ## v0.2 – Control
 
-- [ ] Tray icon with status and notifications
+- [x] Tray icon with status and notifications (drive and volume problems, NAS not answering, new DSM version)
 - [x] Wake-on-LAN, restart, shut down, silence the beeper
 - [x] Open shared folders (SMB) in the file manager of each system
 - [x] Available DSM and package updates

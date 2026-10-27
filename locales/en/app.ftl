@@ -257,3 +257,21 @@ welcome-wake = Wake up (Wake-on-LAN)
 welcome-wake-sent = Wake-up sent. If the NAS stays off, turn on Wake-on-LAN in DSM (Control Panel › Hardware & Power).
 error-wake-no-mac = The MAC address of this NAS is not known yet; search the network once while it is on.
 error-wake = The wake-up could not be sent.
+
+## Tray and notifications
+
+tray-open = Open Syno Companion
+tray-quit = Quit
+tray-not-connected = Not connected to a NAS
+tray-status = { $name }: { $state }
+tray-unreachable = not reachable
+notify-problem = { $part }: { $state }
+notify-healthy = Everything is healthy again.
+notify-unreachable = The NAS does not answer.
+notify-reachable = The NAS answers again.
+notify-dsm-update = DSM { $version } is available.
+settings-background = In the background
+settings-close-to-tray = Keep running in the tray when the window is closed
+settings-close-to-tray-hint = Syno Companion keeps watching the NAS. Open it again from the tray icon.
+settings-notifications = Notifications
+settings-notifications-hint = About drive and volume problems, a NAS that stops answering and new DSM versions.

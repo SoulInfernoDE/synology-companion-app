@@ -75,6 +75,10 @@ Danach meldet sich die App mit dem neuen Konto an und setzt Updates, Zeitzone, N
 - **Wake-on-LAN:** Die Web-API von DSM meldet keine MAC-Adresse, Bonjour und findhostd aber schon. Die App merkt sich die MAC eines gespeicherten NAS aus der Suche und schickt das Magic Packet ans ganze Netz und an das letzte /24-Netz des NAS, auf den Ports 9 und 7.
 - **Freigaben** kommen aus `SYNO.Core.Share list`; versteckte bleiben versteckt. Sie öffnen sich über SMB im Dateimanager des Systems: `smb://`-URLs unter Linux und macOS, `\\host\freigabe` im Explorer unter Windows. Den Ordner `homes` stellt DSM als `home` bereit, den eigenen Home-Ordner.
 
+## Tray und Benachrichtigungen
+
+Eine Hintergrundaufgabe fragt das aktive NAS jede Minute ab, auch bei verstecktem Fenster, und merkt sich, was sie gesehen hat: Das Tray zeigt „Name: Zustand“, und eine Benachrichtigung meldet, wenn ein Volume oder Laufwerk schlechter wird als zuvor, wenn das NAS nicht mehr oder wieder antwortet, wenn alles wieder fehlerfrei ist und, alle sechs Stunden geprüft, wenn DSM eine neue Version anbietet (einmal je Version). Tray-Menü und Benachrichtigungen nutzen dieselben Fluent-Kataloge wie die Oberfläche, eingebettet ins Programm; die Oberfläche gibt ihre Sprache an den Kern weiter. Ob das Schließen des Fensters die App im Tray weiterlaufen lässt und ob Benachrichtigungen erscheinen, steht in `preferences.json` neben der Liste der NAS. Im Tray weiterlaufen ist standardmäßig aus, weil manche Linux-Desktops keine Tray-Symbole zeigen.
+
 ## Skins
 
 Ein Skin ist ein Satz CSS-Variablen plus einige Formregeln (Eckenradius, Schrift, Höhe der Bedienelemente, Fokusdarstellung). Die Oberfläche setzt `data-skin="linux|macos|windows"` und `data-scheme="light|dark"` auf `<html>`. Standardmäßig folgt der Skin dem Betriebssystem, auf dem die App läuft, und das Farbschema der Systemeinstellung; beides lässt sich in den Einstellungen überschreiben. Komponenten nutzen nur die Variablen, nie feste Farben, ein neuer Skin ist also ein einziger CSS-Block.

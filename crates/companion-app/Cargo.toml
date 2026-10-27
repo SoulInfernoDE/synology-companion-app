@@ -26,9 +26,14 @@ companion-discovery = { path = "../companion-discovery" }
 companion-dsm = { path = "../companion-dsm" }
 serde.workspace = true
 serde_json.workspace = true
-tauri = { version = "2", features = [] }
+fluent-bundle = "0.16"
+sys-locale = "0.3"
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-notification = "2"
 tauri-plugin-opener = "2"
 tauri-plugin-single-instance = "2"
+tokio = { version = "1", features = ["time"] }
+unic-langid = "0.9"
 
 # The system keychain: Secret Service (GNOME Keyring, KWallet), macOS Keychain,
 # Windows Credential Manager. The Linux backend is pure Rust, so builds need no libdbus.

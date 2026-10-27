@@ -1,6 +1,7 @@
 //! Commands the user interface calls through Tauri.
 
-use std::sync::Mutex;
+use std::path::PathBuf;
+use std::sync::{Mutex, MutexGuard, RwLock, RwLockReadGuard};
 use std::time::Duration;
 
 use companion_discovery::FoundNas;
@@ -10,7 +11,10 @@ use tauri::State;
 use tauri::async_runtime::{Mutex as AsyncMutex, spawn_blocking};
 
 use crate::devices::{DeviceStore, KnownDevice, device_id};
+use crate::i18n::Texts;
+use crate::preferences::{self, Preferences};
 use crate::secrets::{self, StoredLogin};
+use crate::tray::TrayItems;
 
 /// How long the network is searched for NAS.
 const DISCOVERY_TIME: Duration = Duration::from_secs(3);
@@ -26,16 +30,82 @@ pub struct AppState {
     active: AsyncMutex<Option<Active>>,
     /// The client holding DSM's setup session while the setup form is open.
     pub(crate) pending_setup: AsyncMutex<Option<crate::setup::PendingSetup>>,
+    config_dir: PathBuf,
+    preferences: Mutex<Preferences>,
+    texts: RwLock<Texts>,
+}
+
+/// The active NAS, for background work that must not hold the lock while it waits.
+pub struct Target {
+    pub id: String,
+    pub name: String,
+    pub client: Client,
+    pub session: Session,
 }
 
 impl AppState {
-    pub fn new(store: DeviceStore) -> Self {
+    pub fn new(config_dir: PathBuf) -> Self {
+        let preferences = preferences::load(&config_dir);
         Self {
-            store: Mutex::new(store),
+            store: Mutex::new(DeviceStore::load(&config_dir)),
             active: AsyncMutex::new(None),
             pending_setup: AsyncMutex::new(None),
+            texts: RwLock::new(Texts::new(preferences.language.as_deref())),
+            preferences: Mutex::new(preferences),
+            config_dir,
         }
     }
+
+    pub fn preferences(&self) -> MutexGuard<'_, Preferences> {
+        self.preferences
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+    }
+
+    pub fn texts(&self) -> RwLockReadGuard<'_, Texts> {
+        self.texts
+            .read()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+    }
+
+    pub async fn target(&self) -> Option<Target> {
+        self.active.lock().await.as_ref().map(|active| Target {
+            id: active.device.id.clone(),
+            name: active.device.name.clone(),
+            client: active.client.clone(),
+            session: active.session.clone(),
+        })
+    }
+}
+
+#[tauri::command]
+pub fn get_preferences(state: State<'_, AppState>) -> Preferences {
+    state.preferences().clone()
+}
+
+/// Saves the settings and applies a change of language to tray and notifications.
+#[tauri::command]
+pub fn set_preferences(
+    preferences: Preferences,
+    app: tauri::AppHandle,
+    state: State<'_, AppState>,
+) -> Result<(), Failure> {
+    use tauri::Manager;
+
+    preferences::save(&state.config_dir, &preferences)
+        .map_err(|error| Failure::new("storage", error.to_string()))?;
+    let language_changed = state.preferences().language != preferences.language;
+    *state.preferences() = preferences.clone();
+    if language_changed {
+        let texts = Texts::new(preferences.language.as_deref());
+        if let Some(tray) = app.try_state::<TrayItems>() {
+            tray.relabel(&texts);
+        }
+        if let Ok(mut current) = state.texts.write() {
+            *current = texts;
+        }
+    }
+    Ok(())
 }
 
 /// An error the interface shows: `key` picks the message, `detail` adds technical text.

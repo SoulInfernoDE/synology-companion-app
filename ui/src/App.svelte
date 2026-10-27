@@ -6,10 +6,10 @@
   import Shares from './components/Shares.svelte';
   import Sidebar from './components/Sidebar.svelte';
   import Welcome from './components/Welcome.svelte';
-  import { disconnect, type Failure, type KnownDevice } from './lib/backend';
+  import { disconnect, syncLanguage, type Failure, type KnownDevice } from './lib/backend';
   import { demoDevices, demoOverview, demoUpdates } from './lib/nas';
   import { sections, type SectionId } from './lib/sections';
-  import { persistAndApply } from './lib/settings.svelte';
+  import { persistAndApply, settings } from './lib/settings.svelte';
 
   interface Current {
     name: string;
@@ -23,6 +23,11 @@
 
   // Reads every setting, so it re-runs whenever one changes.
   $effect(persistAndApply);
+
+  // Tray menu and notifications follow the language of the interface.
+  $effect(() => {
+    void syncLanguage(settings.language).catch(() => undefined);
+  });
 
   const planned = $derived(sections.find((entry) => entry.id === section));
 

@@ -154,6 +154,24 @@ export interface Shares {
 
 export type PowerAction = 'reboot' | 'shutdown';
 
+/** Settings the Rust core keeps: tray, notifications, language of both. */
+export interface CorePreferences {
+  language: string | null;
+  closeToTray: boolean;
+  notifications: boolean;
+}
+
+export const getPreferences = () => invoke<CorePreferences>('get_preferences');
+export const setPreferences = (preferences: CorePreferences) =>
+  invoke<void>('set_preferences', { preferences });
+
+/** Hands the interface language to the core, for tray menu and notifications. */
+export async function syncLanguage(language: string | null): Promise<void> {
+  if (!hasCore()) return;
+  const current = await getPreferences();
+  if (current.language !== language) await setPreferences({ ...current, language });
+}
+
 export const discover = () => invoke<FoundNas[]>('discover');
 export const updates = () => invoke<Updates>('updates');
 export const shares = () => invoke<Shares>('shares');

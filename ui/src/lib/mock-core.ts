@@ -45,6 +45,7 @@ let saved: KnownDevice[] = [];
 let trusted = false;
 let connected = false;
 let rememberedDevice = false;
+let preferences = { language: null as string | null, closeToTray: false, notifications: true };
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -143,6 +144,10 @@ const commands: Record<string, (args: Record<string, unknown>) => Promise<unknow
   updates: async () => (await wait(1500), demoUpdates),
   shares: async () => demoShares,
   stop_beep: async () => undefined,
+  get_preferences: async () => preferences,
+  set_preferences: async (args) => {
+    preferences = args.preferences as typeof preferences;
+  },
   power: async () => {
     connected = false;
   },

@@ -1,5 +1,6 @@
 <script lang="ts">
   import ExpertDialog from './ExpertDialog.svelte';
+  import { getPreferences, hasCore, setPreferences, type CorePreferences } from '../lib/backend';
   import icon from '../../../assets/branding/icon.svg';
   import { availableLocales, localeName, t } from '../lib/i18n.svelte';
   import {
@@ -27,6 +28,19 @@
   ];
 
   let askExpert = $state(false);
+
+  // Only the app has a core; the browser preview shows no background settings.
+  let core = $state<CorePreferences | null>(null);
+  $effect(() => {
+    if (hasCore()) void getPreferences().then((preferences) => (core = preferences));
+  });
+
+  async function changeCore(change: Partial<CorePreferences>) {
+    if (!core) return;
+    const next = { ...core, ...change };
+    await setPreferences(next);
+    core = next;
+  }
 
   function toggleExpert(event: Event) {
     const input = event.currentTarget as HTMLInputElement;
@@ -91,6 +105,36 @@
       <input type="checkbox" class="switch" checked={settings.expert} onchange={toggleExpert} />
     </label>
   </section>
+
+  {#if core}
+    <section class="card">
+      <h2>{t('settings-background')}</h2>
+      <label class="row switch-row">
+        <span>
+          {t('settings-close-to-tray')}
+          <span class="subtle block">{t('settings-close-to-tray-hint')}</span>
+        </span>
+        <input
+          type="checkbox"
+          class="switch"
+          checked={core.closeToTray}
+          onchange={(event) => changeCore({ closeToTray: event.currentTarget.checked })}
+        />
+      </label>
+      <label class="row switch-row">
+        <span>
+          {t('settings-notifications')}
+          <span class="subtle block">{t('settings-notifications-hint')}</span>
+        </span>
+        <input
+          type="checkbox"
+          class="switch"
+          checked={core.notifications}
+          onchange={(event) => changeCore({ notifications: event.currentTarget.checked })}
+        />
+      </label>
+    </section>
+  {/if}
 
   <section class="card about">
     <img src={icon} alt="" width="48" height="48" />

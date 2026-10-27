@@ -75,6 +75,10 @@ Afterwards the app signs in with the new account and sets updates, time zone, us
 - **Wake-on-LAN:** DSM's Web API reports no MAC address, but Bonjour and findhostd do. The app keeps the MAC of a saved NAS from discovery and sends the magic packet to the whole network and to the NAS's last /24 network, on ports 9 and 7.
 - **Shared folders** come from `SYNO.Core.Share list`; hidden ones stay hidden. They open over SMB in the system's file manager: `smb://` URLs on Linux and macOS, `\\host\share` in Explorer on Windows. DSM serves the folder `homes` as `home`, the user's own home folder.
 
+## Tray and notifications
+
+A background task asks the active NAS every minute, also while the window is hidden, and keeps what it saw: the tray shows "name: state", and a notification tells when a volume or drive becomes worse than before, when the NAS stops or starts answering, when everything is healthy again and, checked every six hours, when DSM offers a new version (once per version). Tray menu and notifications use the same Fluent catalogs as the interface, embedded into the binary; the interface hands its language to the core. Whether closing the window keeps the app in the tray, and whether notifications are shown, is kept in `preferences.json` next to the list of NAS. Keeping the app in the tray is off by default, because some Linux desktops show no tray icons.
+
 ## Skins
 
 A skin is a set of CSS custom properties plus a few shape rules (corner radius, font, control height, focus style). The UI sets `data-skin="linux|macos|windows"` and `data-scheme="light|dark"` on `<html>`. By default the skin follows the operating system the app runs on and the scheme follows the system setting; both can be overridden in the settings. Components only use the tokens, never fixed colors, so a new skin is one CSS block.

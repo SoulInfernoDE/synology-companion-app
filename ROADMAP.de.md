@@ -24,7 +24,7 @@ Jede Version ist für sich nutzbar. Funktionen, die das NAS über DSMs eigene Ei
 
 ## v0.2 – Steuern
 
-- [ ] Tray-Icon mit Status und Benachrichtigungen
+- [x] Tray-Icon mit Status und Benachrichtigungen (Probleme mit Laufwerken und Volumes, NAS antwortet nicht, neue DSM-Version)
 - [x] Wake-on-LAN, Neustart, Herunterfahren, Piepton abschalten
 - [x] Freigaben (SMB) im Dateimanager des jeweiligen Systems öffnen
 - [x] Verfügbare DSM- und Paket-Updates
