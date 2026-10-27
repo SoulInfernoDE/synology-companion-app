@@ -1,0 +1,39 @@
+# Lets DSM use drives that are not on Synology's compatibility list, by adding
+# them to the drive database. Script by 007revad, MIT licence.
+id = "third-party-drives"
+source = "https://github.com/007revad/Synology_HDD_db"
+author = "007revad"
+license = "MIT"
+version = "v3.6.139"
+download = "https://raw.githubusercontent.com/007revad/Synology_HDD_db/v3.6.139/syno_hdd_db.sh"
+file = "syno_hdd_db.sh"
+sha256 = "e8a392b9357142ec6d9de944653ba79d858030ba590d8cc25a287175a14fa079"
+dsm = "7.0"
+survives-update = false
+backup = [
+    "/etc.defaults/synoinfo.conf",
+    "/etc/synoinfo.conf",
+    "/var/lib/disk-compatibility",
+]
+
+[steps]
+# Applied when the script left its backups or switched off DSM's database updates.
+check = "ls /var/lib/disk-compatibility/*.db.bak >/dev/null 2>&1 || grep -q '^drive_db_test_url=' /etc/synoinfo.conf"
+# -e: no colours in the output.
+apply = "bash {script} -e {options}"
+restore = "bash {script} -e --restore"
+
+[[options]]
+id = "noupdate"
+flag = "--noupdate"
+default = true
+
+[[options]]
+id = "wdda"
+flag = "--wdda"
+default = false
+
+[[options]]
+id = "ram"
+flag = "--ram"
+default = false

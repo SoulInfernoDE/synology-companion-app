@@ -89,7 +89,6 @@ drive-nvme = NVMe-SSD
 ## Geplante Bereiche
 
 planned-version = Geplant für Version { $version }
-planned-extensions = Community-Skripte als sichere Rezepte: jeden Befehl vorher sehen, sichern, anwenden, rückgängig machen. Festplatten von Drittanbietern kommen zuerst.
 planned-nextcloud = Nextcloud in einem geführten Durchlauf aktualisieren: PHP, MariaDB und Redis prüfen, Snapshot anlegen, Updater starten, Rechte wieder schließen.
 
 ## Expertenmodus
@@ -374,3 +373,45 @@ error-feed-invalid = DSM kann unter dieser Adresse keine Paketliste lesen.
 error-package-unavailable = Ein Paket wird für dieses NAS nicht angeboten.
 error-package-checksum = Der Download passt nicht zu seiner Prüfsumme und wurde nicht installiert.
 error-package-install = Das Paket konnte nicht installiert werden.
+
+## Erweiterungen (Rezepte)
+
+extensions-intro = Rezepte führen bewährte Community-Skripte auf dem NAS aus: aus einem festen Release, gegen seine Prüfsumme geprüft, mit Sicherung vorher und einem Weg zurück.
+extensions-warning = Sie ändern DSM auf eine Weise, die Synology nicht unterstützt. Lies, was ein Rezept tut, sichere deine Daten und probiere neue Rezepte zuerst auf einem Testsystem aus.
+extensions-needs-ssh = Rezepte laufen über SSH mit Schlüssel.
+extensions-by = von { $author } · { $license }
+extensions-applied = angewendet
+extensions-not-applied = nicht angewendet
+extensions-unsupported = braucht DSM { $dsm }
+extensions-options = Optionen
+extensions-update-note = Ein DSM-Update kann das rückgängig machen; danach erneut anwenden.
+extensions-plan-title = Was passiert
+extensions-plan-download = { $file } { $version } in deinen Home-Ordner auf dem NAS laden und die SHA-256-Prüfsumme prüfen
+extensions-plan-backup = Als root sichern:
+extensions-plan-apply = Als root ausführen:
+extensions-plan-restore = Den Wiederherstellungsschritt des Rezepts als root ausführen
+extensions-plan-check = Das Ergebnis prüfen
+extensions-plan-journal = Den Lauf ins Journal auf dem NAS schreiben
+extensions-apply = Anwenden
+extensions-apply-again = Erneut anwenden
+extensions-restore = Wiederherstellen
+extensions-running = Läuft…
+extensions-result-ok = Fertig.
+extensions-result-failed = Das Rezept ist nicht durchgelaufen. Sonst wurde nichts geändert; siehe die Ausgabe.
+extensions-backup-at = Sicherung:
+extensions-output = Ausgabe
+extensions-journal = Journal
+extensions-journal-empty = Auf diesem NAS ist noch kein Rezept gelaufen.
+extensions-export = Exportieren
+extensions-exported = Das Journal wurde gespeichert.
+extensions-applied-action = angewendet
+extensions-restored = wiederhergestellt
+extensions-demo = Beispieldaten: Die Demo führt keine Rezepte aus.
+recipe-third-party-drives-title = Laufwerke anderer Hersteller
+recipe-third-party-drives-text = Trägt die eingebauten HDDs, SSDs und M.2-Laufwerke in DSMs Kompatibilitätsdatenbank ein, damit DSM sie nicht mehr als ungeprüft meldet und Funktionen wie M.2-Volumes erlaubt. Nutzt Synology_HDD_db von 007revad.
+recipe-third-party-drives-option-noupdate = DSM daran hindern, die Laufwerksdatenbank durch die eigene zu ersetzen
+recipe-third-party-drives-option-wdda = WD Device Analytics abschalten (falsche Warnungen für WD-Laufwerke älter als drei Jahre)
+recipe-third-party-drives-option-ram = Die Kompatibilitätsprüfung des Arbeitsspeichers abschalten (für RAM anderer Hersteller)
+error-recipe-checksum = Das heruntergeladene Skript passt nicht zu seiner Prüfsumme. Es wurde nichts ausgeführt.
+error-recipe-dsm = Dieses Rezept braucht ein neueres DSM.
+error-recipe-failed = Das Rezept konnte nicht laufen.

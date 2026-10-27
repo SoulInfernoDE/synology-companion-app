@@ -20,9 +20,11 @@ import type {
 } from './backend';
 import {
   demoDiagnostics,
+  demoJournal,
   demoMemory,
   demoOverview,
   demoPackages,
+  demoRecipes,
   demoShares,
   demoUpdates,
 } from './nas';
@@ -151,6 +153,40 @@ async function completeSetup(request: CompleteSetupRequest) {
   return { device, skipped: [], signedIn: true };
 }
 
+let mockRecipes = demoRecipes.map((state) => ({
+  ...state,
+  status: state.status && { ...state.status, applied: false },
+}));
+let mockJournal = [...demoJournal];
+
+async function recipeRun(args: Record<string, unknown>, action: 'apply' | 'restore') {
+  await wait(1500);
+  if (args.password === undefined) throw { key: 'password-required' };
+  if (args.password !== 'demo') throw { key: 'sudo' };
+  const applied = action === 'apply';
+  mockRecipes = mockRecipes.map((state) =>
+    state.recipe.id === args.id
+      ? { ...state, status: state.status && { ...state.status, applied } }
+      : state,
+  );
+  const backup = applied ? '/var/services/homes/demo/.syno-companion/backups/mock.tar.gz' : null;
+  mockJournal = [
+    ...mockJournal,
+    {
+      time: Math.floor(Date.now() / 1000),
+      recipe: String(args.id),
+      version: 'v3.6.139',
+      action,
+      options: (args.options as string[] | undefined) ?? [],
+      ok: true,
+      dsm: '7.2.2-72806',
+      backup: backup ?? undefined,
+      by: 'Syno Companion (Linux)',
+    },
+  ];
+  return { ok: true, output: `Mock ${action}: nothing changed.`, backup, applied };
+}
+
 let sshEnabled = false;
 let mockPackages = demoPackages;
 let mockSources = { feeds: [] as { name: string; url: string }[], trustLevel: 0 };
@@ -265,6 +301,11 @@ const commands: Record<string, (args: Record<string, unknown>) => Promise<unknow
     );
     return [pkg.name];
   },
+  recipes: async () => (await wait(500), mockRecipes),
+  journal: async () => mockJournal,
+  export_journal: async () => true,
+  recipe_apply: async (args) => recipeRun(args, 'apply'),
+  recipe_restore: async (args) => recipeRun(args, 'restore'),
   forget_device: async (args) => {
     saved = saved.filter((device) => device.id !== args.id);
   },

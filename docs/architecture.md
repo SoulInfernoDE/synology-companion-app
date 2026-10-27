@@ -35,10 +35,10 @@
 | `crates/companion-discovery` | Finds NAS on the local network (Bonjour, Synology Assistant) |
 | `crates/companion-mockdsm`   | `mock-dsm`, a stand-in DSM to try the app without a NAS      |
 | `crates/companion-ssh`       | SSH, keys, sudo, diagnostics                                 |
-| `crates/companion-recipes`   | Recipe engine and journal _(planned)_                        |
+| `crates/companion-recipes`   | Recipe engine and journal                                    |
 | `ui/`                        | User interface (Svelte 5, TypeScript, Vite)                  |
 | `locales/`                   | Fluent catalogs, shared by Rust and UI (`en` base, `de`)     |
-| `recipes/`                   | Recipe manifests _(planned)_                                 |
+| `recipes/`                   | Recipe manifests                                             |
 | `assets/branding/`           | Icon and logos                                               |
 
 ## Finding NAS
@@ -102,31 +102,37 @@ All UI text comes from Fluent catalogs in `locales/<locale>/*.ftl`. English is t
 
 ## Recipes
 
-A recipe wraps a community script or a set of commands so that a regular user can run it safely. Example (format not final):
+A recipe wraps a community script so that it can be run safely. Recipes live in `recipes/*.toml` and are built into the app (crate `companion-recipes`); they appear in the _Extensions_ section in expert mode. The first one:
 
 ```toml
 id = "third-party-drives"
-name = "recipe-third-party-drives"          # Fluent message ID
 source = "https://github.com/007revad/Synology_HDD_db"
-version = "v3.6.139"
-sha256 = "…"
+author = "007revad"
 license = "MIT"
-dsm = ">=7.3"
-expert = true
-survives-update = false                       # re-apply after DSM updates
+version = "v3.6.139"
+download = "https://raw.githubusercontent.com/007revad/Synology_HDD_db/v3.6.139/syno_hdd_db.sh"
+file = "syno_hdd_db.sh"
+sha256 = "e8a392b9…"
+dsm = "7.0"                    # oldest DSM version
+survives-update = false        # a DSM update can undo it
+backup = ["/etc.defaults/synoinfo.conf", "/etc/synoinfo.conf", "/var/lib/disk-compatibility"]
 
 [steps]
-check   = "syno_hdd_db.sh --showedits"  # read-only
-backup  = "builtin:backup /var/lib/disk-compatibility"
-apply   = "syno_hdd_db.sh --noupdate"
-verify  = "syno_hdd_db.sh --showedits"
-restore = "syno_hdd_db.sh --restore"
+check = "ls /var/lib/disk-compatibility/*.db.bak >/dev/null 2>&1 || grep -q '^drive_db_test_url=' /etc/synoinfo.conf"
+apply = "bash {script} -e {options}"
+restore = "bash {script} -e --restore"
+
+[[options]]
+id = "noupdate"
+flag = "--noupdate"
+default = true
 ```
 
 Rules for every recipe:
 
-1. The script is downloaded from the pinned release and checked against `sha256`; a mismatch stops everything.
-2. `check` and `plan` change nothing; their output is shown before the user confirms.
-3. `backup` runs before `apply`; `restore` must undo `apply` completely.
-4. Every run is written to the journal (time, NAS, DSM build, recipe version, result).
-5. Recipes with `survives-update = false` are listed by the _after the update_ assistant.
+1. `check` changes nothing and runs without root; exit status 0 means applied. The app shows it as the recipe's state, together with whether the DSM version is new enough.
+2. Before anything runs, the app shows the plan: the file and version it downloads, the paths it backs up and the exact command with the chosen options.
+3. The script is downloaded on the NAS into `~/.syno-companion/recipes/<id>/<version>/` and checked against `sha256`; a mismatch stops everything. It is checked once more right before it runs as root.
+4. As root: the `backup` paths are saved to `~/.syno-companion/backups/<id>-<time>.tar.gz` (owned by the account), then `apply` runs; `check` tells whether it worked. `restore` undoes `apply` with the script's own restore step.
+5. Every run is appended to `~/.syno-companion/journal.jsonl` on the NAS (time, recipe and version, action, options, result, DSM version and build, backup, the computer that ran it), so every computer sees the same journal; the app can export it as JSON.
+6. Recipes with `survives-update = false` are listed by the _after the update_ assistant (v0.5).

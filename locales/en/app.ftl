@@ -89,7 +89,6 @@ drive-nvme = NVMe SSD
 ## Planned sections
 
 planned-version = Planned for version { $version }
-planned-extensions = Community scripts as safe recipes: see every command first, back up, apply, undo. Third-party drives come first.
 planned-nextcloud = Update Nextcloud in one guided run: check PHP, MariaDB and Redis, take a snapshot, run the updater, close the permissions again.
 
 ## Expert mode
@@ -374,3 +373,45 @@ error-feed-invalid = DSM cannot read a package list at this address.
 error-package-unavailable = A package is not offered for this NAS.
 error-package-checksum = The download does not match its checksum and was not installed.
 error-package-install = The package could not be installed.
+
+## Extensions (recipes)
+
+extensions-intro = Recipes run proven community scripts on the NAS: from a pinned release, checked against its checksum, with a backup first and a way back.
+extensions-warning = These change DSM in ways Synology does not support. Read what a recipe does, keep backups of your data and try new recipes on a test system first.
+extensions-needs-ssh = Recipes run over SSH with a key.
+extensions-by = by { $author } · { $license }
+extensions-applied = applied
+extensions-not-applied = not applied
+extensions-unsupported = needs DSM { $dsm }
+extensions-options = Options
+extensions-update-note = A DSM update can undo this; apply it again afterwards.
+extensions-plan-title = What happens
+extensions-plan-download = Download { $file } { $version } to your home folder on the NAS and check its SHA-256 checksum
+extensions-plan-backup = Back up as root:
+extensions-plan-apply = Run as root:
+extensions-plan-restore = Run the recipe's restore step as root
+extensions-plan-check = Check the result
+extensions-plan-journal = Write the run to the journal on the NAS
+extensions-apply = Apply
+extensions-apply-again = Apply again
+extensions-restore = Restore
+extensions-running = Running…
+extensions-result-ok = Done.
+extensions-result-failed = The recipe did not finish. Nothing else was changed; see the output.
+extensions-backup-at = Backup:
+extensions-output = Output
+extensions-journal = Journal
+extensions-journal-empty = No recipe has run on this NAS yet.
+extensions-export = Export
+extensions-exported = The journal was saved.
+extensions-applied-action = applied
+extensions-restored = restored
+extensions-demo = Sample data: the demo runs no recipes.
+recipe-third-party-drives-title = Third-party drives
+recipe-third-party-drives-text = Adds the installed HDDs, SSDs and M.2 drives to DSM's compatibility database, so DSM no longer calls them unverified and allows features such as M.2 volumes. Uses Synology_HDD_db by 007revad.
+recipe-third-party-drives-option-noupdate = Keep DSM from replacing the drive database with its own
+recipe-third-party-drives-option-wdda = Turn off WD Device Analytics (false warnings for WD drives older than three years)
+recipe-third-party-drives-option-ram = Turn off the memory compatibility check (for third-party RAM)
+error-recipe-checksum = The downloaded script does not match its checksum. Nothing was run.
+error-recipe-dsm = This recipe needs a newer DSM.
+error-recipe-failed = The recipe could not run.

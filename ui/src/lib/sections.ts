@@ -26,14 +26,7 @@ export const sections: readonly Section[] = [
   { id: 'files', label: 'nav-files', icon: FolderOpen },
   { id: 'packages', label: 'nav-packages', icon: Package },
   { id: 'ssh', label: 'nav-ssh', icon: SquareTerminal },
-  {
-    id: 'extensions',
-    label: 'nav-extensions',
-    icon: Puzzle,
-    planned: '0.4',
-    description: 'planned-extensions',
-    expert: true,
-  },
+  { id: 'extensions', label: 'nav-extensions', icon: Puzzle, expert: true },
   {
     id: 'nextcloud',
     label: 'nav-nextcloud',

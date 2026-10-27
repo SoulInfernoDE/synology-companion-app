@@ -1,7 +1,15 @@
 // What the interface knows about a NAS. The Rust core fills these from the DSM Web API;
 // in demo mode they come from `demoOverview`.
 
-import type { Diagnostics, MemoryModule, Package, Shares, Updates } from './backend';
+import type {
+  Diagnostics,
+  JournalEntry,
+  MemoryModule,
+  Package,
+  RecipeState,
+  Shares,
+  Updates,
+} from './backend';
 
 export type Health = 'normal' | 'warning' | 'critical';
 
@@ -272,5 +280,46 @@ export const demoPackages: Package[] = [
       '4.0.3-32',
     ),
     publisher: 'SynoCommunity',
+  },
+];
+
+export const demoRecipes: RecipeState[] = [
+  {
+    recipe: {
+      id: 'third-party-drives',
+      source: 'https://github.com/007revad/Synology_HDD_db',
+      author: '007revad',
+      license: 'MIT',
+      version: 'v3.6.139',
+      download:
+        'https://raw.githubusercontent.com/007revad/Synology_HDD_db/v3.6.139/syno_hdd_db.sh',
+      file: 'syno_hdd_db.sh',
+      sha256: 'e8a392b9357142ec6d9de944653ba79d858030ba590d8cc25a287175a14fa079',
+      dsm: '7.0',
+      survivesUpdate: false,
+      backup: ['/etc.defaults/synoinfo.conf', '/etc/synoinfo.conf', '/var/lib/disk-compatibility'],
+      steps: { check: '', apply: 'bash {script} -e {options}', restore: '' },
+      options: [
+        { id: 'noupdate', flag: '--noupdate', default: true },
+        { id: 'wdda', flag: '--wdda', default: false },
+        { id: 'ram', flag: '--ram', default: false },
+      ],
+    },
+    status: { applied: true, supported: true, dsm: '7.2.2-72806' },
+  },
+];
+
+export const demoJournal: JournalEntry[] = [
+  {
+    time: 1792500000,
+    recipe: 'third-party-drives',
+    version: 'v3.6.139',
+    action: 'apply',
+    options: ['noupdate'],
+    ok: true,
+    dsm: '7.2.2-72806',
+    backup:
+      '/var/services/homes/admin/.syno-companion/backups/third-party-drives-1792500000.tar.gz',
+    by: 'Syno Companion (Linux)',
   },
 ];

@@ -346,3 +346,57 @@ export function hasUpdate(pkg: Package): boolean {
   }
   return false;
 }
+
+export interface Recipe {
+  id: string;
+  source: string;
+  author: string;
+  license: string;
+  version: string;
+  download: string;
+  file: string;
+  sha256: string;
+  dsm: string;
+  survivesUpdate: boolean;
+  backup: string[];
+  steps: { check: string; apply: string; restore: string };
+  options: { id: string; flag: string; default: boolean }[];
+}
+
+export interface RecipeStatus {
+  applied: boolean;
+  supported: boolean;
+  dsm: string;
+}
+
+export interface RecipeState {
+  recipe: Recipe;
+  status: RecipeStatus | null;
+}
+
+export interface RecipeRun {
+  ok: boolean;
+  output: string;
+  backup: string | null;
+  applied: boolean;
+}
+
+export interface JournalEntry {
+  time: number;
+  recipe: string;
+  version: string;
+  action: 'apply' | 'restore';
+  options: string[];
+  ok: boolean;
+  dsm: string;
+  backup?: string;
+  by: string;
+}
+
+export const recipes = () => invoke<RecipeState[]>('recipes');
+export const recipeApply = (id: string, options: string[], password?: string) =>
+  invoke<RecipeRun>('recipe_apply', { id, options, password });
+export const recipeRestore = (id: string, password?: string) =>
+  invoke<RecipeRun>('recipe_restore', { id, password });
+export const journal = () => invoke<JournalEntry[]>('journal');
+export const exportJournal = () => invoke<boolean>('export_journal');

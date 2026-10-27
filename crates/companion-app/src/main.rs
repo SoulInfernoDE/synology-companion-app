@@ -8,6 +8,7 @@ mod devices;
 mod i18n;
 mod monitor;
 mod preferences;
+mod recipes;
 mod secrets;
 mod setup;
 mod ssh;
@@ -17,6 +18,7 @@ use tauri::{Manager, WindowEvent};
 
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
@@ -78,6 +80,11 @@ fn main() {
             commands::add_package_source,
             commands::remove_package_source,
             ssh::install_package,
+            recipes::recipes,
+            recipes::recipe_apply,
+            recipes::recipe_restore,
+            recipes::journal,
+            recipes::export_journal,
             ssh::ssh_link,
             ssh::ssh_unlink,
             ssh::diagnostics,

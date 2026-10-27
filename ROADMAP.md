@@ -41,10 +41,10 @@ Each version is usable on its own. Features that change the NAS beyond DSM's own
 
 ## v0.4 – Extend (expert mode)
 
-- [ ] Expert mode with clear warnings
-- [ ] Recipe engine: manifest with source repository, pinned version, checksum, steps _check / plan / backup / apply / verify / restore_, licence and supported DSM versions ([architecture](docs/architecture.md#recipes))
-- [ ] Journal of every change, exportable
-- [ ] First recipe: third-party drives (Synology_HDD_db), including restore
+- [x] Expert mode with clear warnings
+- [x] Recipe engine: manifest with source repository, pinned version, checksum, steps _check / plan / backup / apply / verify / restore_, licence and supported DSM versions ([architecture](docs/architecture.md#recipes))
+- [x] Journal of every change, kept on the NAS, exportable
+- [x] First recipe: third-party drives (Synology_HDD_db), including restore
 - [x] Package sources: add SynoCommunity and other feeds, browse and install their packages (with the packages they depend on)
 - [ ] Container images: check for newer images and recreate containers
 

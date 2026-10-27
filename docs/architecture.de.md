@@ -35,10 +35,10 @@
 | `crates/companion-discovery` | Findet NAS im lokalen Netz (Bonjour, Synology Assistant)              |
 | `crates/companion-mockdsm`   | `mock-dsm`, ein nachgebauter DSM, um die App ohne NAS auszuprobieren  |
 | `crates/companion-ssh`       | SSH, Schlüssel, sudo, Diagnose                                        |
-| `crates/companion-recipes`   | Rezept-Engine und Protokoll _(geplant)_                               |
+| `crates/companion-recipes`   | Rezept-Engine und Protokoll                                           |
 | `ui/`                        | Oberfläche (Svelte 5, TypeScript, Vite)                               |
 | `locales/`                   | Fluent-Kataloge, von Rust und UI gemeinsam genutzt (`en` Basis, `de`) |
-| `recipes/`                   | Rezept-Manifeste _(geplant)_                                          |
+| `recipes/`                   | Rezept-Manifeste                                                      |
 | `assets/branding/`           | Icon und Logos                                                        |
 
 ## NAS finden
@@ -102,31 +102,37 @@ Alle Texte der Oberfläche kommen aus Fluent-Katalogen in `locales/<locale>/*.ft
 
 ## Rezepte
 
-Ein Rezept verpackt ein Community-Skript oder eine Reihe von Befehlen so, dass ein normaler Benutzer es sicher ausführen kann. Beispiel (Format nicht endgültig):
+Ein Rezept verpackt ein Community-Skript so, dass es sich sicher ausführen lässt. Rezepte liegen in `recipes/*.toml` und sind in die App eingebaut (Crate `companion-recipes`); sie erscheinen im Expertenmodus im Bereich _Erweiterungen_. Das erste:
 
 ```toml
 id = "third-party-drives"
-name = "recipe-third-party-drives"          # Fluent-Meldungs-ID
 source = "https://github.com/007revad/Synology_HDD_db"
-version = "v3.6.139"
-sha256 = "…"
+author = "007revad"
 license = "MIT"
-dsm = ">=7.3"
-expert = true
-survives-update = false                       # nach DSM-Updates neu einspielen
+version = "v3.6.139"
+download = "https://raw.githubusercontent.com/007revad/Synology_HDD_db/v3.6.139/syno_hdd_db.sh"
+file = "syno_hdd_db.sh"
+sha256 = "e8a392b9…"
+dsm = "7.0"                    # älteste DSM-Version
+survives-update = false        # ein DSM-Update kann es rückgängig machen
+backup = ["/etc.defaults/synoinfo.conf", "/etc/synoinfo.conf", "/var/lib/disk-compatibility"]
 
 [steps]
-check   = "syno_hdd_db.sh --showedits"  # nur lesend
-backup  = "builtin:backup /var/lib/disk-compatibility"
-apply   = "syno_hdd_db.sh --noupdate"
-verify  = "syno_hdd_db.sh --showedits"
-restore = "syno_hdd_db.sh --restore"
+check = "ls /var/lib/disk-compatibility/*.db.bak >/dev/null 2>&1 || grep -q '^drive_db_test_url=' /etc/synoinfo.conf"
+apply = "bash {script} -e {options}"
+restore = "bash {script} -e --restore"
+
+[[options]]
+id = "noupdate"
+flag = "--noupdate"
+default = true
 ```
 
 Regeln für jedes Rezept:
 
-1. Das Skript wird aus dem festgelegten Release geladen und gegen `sha256` geprüft; bei Abweichung bricht alles ab.
-2. `check` und `plan` ändern nichts; ihre Ausgabe wird angezeigt, bevor der Benutzer bestätigt.
-3. `backup` läuft vor `apply`; `restore` muss `apply` vollständig rückgängig machen.
-4. Jeder Lauf wird ins Protokoll geschrieben (Zeit, NAS, DSM-Build, Rezeptversion, Ergebnis).
-5. Rezepte mit `survives-update = false` listet der Assistent _Nach dem Update_ auf.
+1. `check` ändert nichts und läuft ohne root; Exit-Status 0 heißt angewendet. Die App zeigt das als Zustand des Rezepts, zusammen damit, ob die DSM-Version neu genug ist.
+2. Bevor etwas läuft, zeigt die App den Plan: welche Datei in welcher Version sie lädt, welche Pfade sie sichert und den genauen Befehl mit den gewählten Optionen.
+3. Das Skript wird auf dem NAS nach `~/.syno-companion/recipes/<id>/<version>/` geladen und gegen `sha256` geprüft; bei Abweichung bricht alles ab. Direkt bevor es als root läuft, wird es noch einmal geprüft.
+4. Als root: Die `backup`-Pfade werden nach `~/.syno-companion/backups/<id>-<zeit>.tar.gz` gesichert (dem Konto gehörend), dann läuft `apply`; `check` sagt, ob es geklappt hat. `restore` macht `apply` mit dem eigenen Wiederherstellungsschritt des Skripts rückgängig.
+5. Jeder Lauf wird an `~/.syno-companion/journal.jsonl` auf dem NAS angehängt (Zeit, Rezept und Version, Aktion, Optionen, Ergebnis, DSM-Version und Build, Sicherung, der Computer, der ihn ausgeführt hat), sodass jeder Computer dasselbe Journal sieht; die App kann es als JSON exportieren.
+6. Rezepte mit `survives-update = false` listet der Assistent _Nach dem Update_ auf (v0.5).

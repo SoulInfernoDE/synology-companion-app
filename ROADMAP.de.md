@@ -41,10 +41,10 @@ Jede Version ist für sich nutzbar. Funktionen, die das NAS über DSMs eigene Ei
 
 ## v0.4 – Erweitern (Expertenmodus)
 
-- [ ] Expertenmodus mit deutlichen Warnungen
-- [ ] Rezept-Engine: Manifest mit Quell-Repository, fester Version, Prüfsumme, Schritten _prüfen / planen / sichern / anwenden / kontrollieren / wiederherstellen_, Lizenz und unterstützten DSM-Versionen ([Architektur](docs/architecture.de.md#rezepte))
-- [ ] Protokoll jeder Änderung, exportierbar
-- [ ] Erstes Rezept: Festplatten von Drittanbietern (Synology_HDD_db), mit Wiederherstellung
+- [x] Expertenmodus mit deutlichen Warnungen
+- [x] Rezept-Engine: Manifest mit Quell-Repository, fester Version, Prüfsumme, Schritten _prüfen / planen / sichern / anwenden / kontrollieren / wiederherstellen_, Lizenz und unterstützten DSM-Versionen ([Architektur](docs/architecture.de.md#rezepte))
+- [x] Protokoll jeder Änderung, auf dem NAS gespeichert, exportierbar
+- [x] Erstes Rezept: Festplatten von Drittanbietern (Synology_HDD_db), mit Wiederherstellung
 - [x] Paketquellen: SynoCommunity und andere Quellen hinzufügen, Pakete durchsuchen und installieren (samt der Pakete, die sie brauchen)
 - [ ] Container-Images: auf neuere Images prüfen und Container neu erstellen
 

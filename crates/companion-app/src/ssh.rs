@@ -56,7 +56,10 @@ impl SshState {
 }
 
 /// A connection to `device` with its key, reusing an open one.
-async fn connection(ssh: &SshState, device: &KnownDevice) -> Result<Arc<Connection>, Failure> {
+pub(crate) async fn connection(
+    ssh: &SshState,
+    device: &KnownDevice,
+) -> Result<Arc<Connection>, Failure> {
     let link = device
         .ssh
         .clone()
@@ -89,7 +92,7 @@ async fn connection(ssh: &SshState, device: &KnownDevice) -> Result<Arc<Connecti
     Ok(connection)
 }
 
-async fn stored_password(device: &KnownDevice) -> Option<String> {
+pub(crate) async fn stored_password(device: &KnownDevice) -> Option<String> {
     let (id, account) = (device.id.clone(), device.account.clone());
     keychain(move || secrets::load(&id, &account).password)
         .await
