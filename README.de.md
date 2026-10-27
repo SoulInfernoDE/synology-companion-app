@@ -13,11 +13,11 @@
 
 Sie ist für **normale Benutzer ohne Shell-Erfahrung** gedacht. Alles, was über DSM hinaus ins System eingreift, liegt hinter einem **Expertenmodus**, zeigt vorher die genauen Befehle, legt zuerst eine Sicherung an und lässt sich rückgängig machen.
 
-> **Stand: Pre-Alpha, Version 0.3.** NAS finden, Ersteinrichtung, Anmeldung (mit 2FA und Zertifikatsprüfung), Übersicht mit Updates, Neustart und Herunterfahren, Freigaben, Wake-on-LAN, Benachrichtigungen im Tray, mehrere NAS nebeneinander und SSH mit Schlüssel (Diagnose, Terminal) funktionieren; die Grundlagen sind an einem Virtual DSM 7.4.1 getestet. Downloads: [Releases](https://github.com/SoulInfernoDE/synology-companion-app/releases). Siehe [Roadmap](ROADMAP.de.md).
+> **Stand: Alles für 1.0 Geplante ist im Hauptzweig; das zuletzt veröffentlichte Release ist 0.2.** Die Grundlagen sind an einem Virtual DSM getestet; Pakete, Container, Rezepte und Nextcloud sind gegen ein Ersatz-DSM getestet und müssen noch an echter Hardware geprüft werden. Downloads: [Releases](https://github.com/SoulInfernoDE/synology-companion-app/releases). Siehe [Roadmap](ROADMAP.de.md).
 >
 > Syno Companion ist ein unabhängiges Community-Projekt. Es steht in keiner Verbindung zu Synology Inc. und wird von Synology weder unterstützt noch empfohlen. „Synology“ und „DSM“ sind Marken der Synology Inc.
 
-## Geplante Funktionen
+## Funktionen
 
 **Alltag (ohne Expertenmodus)**
 
@@ -27,22 +27,26 @@ Sie ist für **normale Benutzer ohne Shell-Erfahrung** gedacht. Alles, was über
 - **Tray und Benachrichtigungen:** herabgestuftes Volume, fehlgeschlagene Sicherung, Festplattenwarnungen, neue Updates.
 - **Steuerung:** Wake-on-LAN, Neustart, Herunterfahren, Piepton abschalten.
 - **Freigaben mit einem Klick:** im Dateimanager eingebunden (Nemo/Nautilus/Dolphin, Finder, Explorer).
-- **Download Station:** Links, Torrent-Dateien und `magnet:`-Links übergeben.
+- **Download Station:** Downloads verfolgen, HTTP-, FTP- und `magnet:`-Links hinzufügen, anhalten, fortsetzen und entfernen.
 - **SSH leicht gemacht:** Die App schaltet SSH auf Wunsch ein, erzeugt einen eigenen Schlüssel für diesen Computer, hinterlegt ihn auf dem NAS mit den Rechten, die sshd erwartet, und merkt sich den Host-Schlüssel. Danach arbeitet sie ohne Passwortabfrage auf dem NAS; `sudo`-Passwörter bleiben im Schlüsselbund und stehen nie in einer Befehlszeile. Die Diagnose zeigt, was DSM verbirgt (Kernel, `io_uring`, Speichermodule, Netzwerktreiber), der Expertenmodus ergänzt ein Terminal.
-- **Paketquellen:** Community-Quellen wie [SynoCommunity](https://synocommunity.com) hinzufügen und deren Pakete durchsuchen.
+- **Pakete:** Pakete von Synology und aus Community-Quellen wie [SynoCommunity](https://synocommunity.com) installieren und aktualisieren, samt der Pakete, die sie brauchen.
+- **Container:** sehen, welche Container von Container Manager ein älteres Image nutzen, als ihr Tag anbietet, und Compose-Projekte aktualisieren.
 
 **Expertenmodus**
 
 - **Festplatten von Drittanbietern:** HDDs, SSDs und NVMe-Laufwerke hinzufügen, die nicht in Synologys Kompatibilitätsdatenbank stehen, auf Basis von [007revad/Synology_HDD_db](https://github.com/007revad/Synology_HDD_db).
 - **Erweiterungskatalog:** Community-Skripte von GitHub als _Rezepte_: feste Version mit Prüfsumme, Vorschau jedes Befehls, Sicherung, Anwenden, Prüfen, Rückgängig.
-- **Komponenten-Updates:** Container-Images aktualisieren; die Docker-Engine von Container Manager über die von Synology ausgelieferte Version hinaus aktualisieren.
-- **Nach einem DSM-Update:** Die App erkennt die neue DSM-Version und bietet an, alle Anpassungen, die das Update entfernt hat, in einem Schritt wieder einzuspielen.
-- **Speichertest** wie im Synology Assistant (Recherche, siehe Roadmap).
-- **Systemdiagnose:** Kernel-Version und Kernel-Funktionen wie `io_uring`.
+- **Nach einem DSM-Update:** Die App erkennt die neue DSM-Version und bietet an, jedes Rezept, das das Update entfernt hat, mit den Optionen des letzten Laufs wieder einzuspielen; eine optionale Startaufgabe auf dem NAS erledigt das auch ohne die App.
+- **Journal:** Jeder Lauf eines Rezepts landet in einem Journal auf dem NAS, exportierbar als JSON.
 
-**Nextcloud (v1.x)**
+**Nextcloud**
 
-Ein eigener Tab für Nextcloud auf Web Station: prüfen, welche MariaDB-, Redis- und PHP-Versionen das NAS anbieten kann und was das nächste Nextcloud-Release braucht, Snapshot und Datenbank-Dump anlegen, Rechte öffnen, Updater laufen lassen, `occ upgrade` ausführen, Rechte wieder schließen. Ein Knopf statt eines Abends voller Shell-Befehle.
+Ein eigener Tab für Nextcloud auf Web Station: Er zeigt Version, PHP, Datenbank und Redis, prüft die PHP-Version gegen das, was das nächste Nextcloud-Release braucht, und aktualisiert in sichtbaren Schritten: Datenbank-Dump, Wartungsmodus, Rechte öffnen, Updater von Nextcloud, `occ upgrade`, fehlende Indizes, Rechte wieder schließen. Jeder Schritt lässt sich verfolgen und fortsetzen. Ein Knopf statt eines Abends voller Shell-Befehle.
+
+**Noch nicht**
+
+- Die Docker-Engine von Container Manager aktualisieren: Für aktuelle Container-Manager-Versionen gibt es noch kein gepflegtes Skript.
+- Den Speichertest aus der App starten: Die App zeigt die Ergebnisse des Tests aus dem Synology Assistant; ihn zu starten braucht Recherche an echter Hardware.
 
 **v2.0**
 
@@ -58,11 +62,11 @@ Die App hat **Skins** für Linux, macOS und Windows, jeweils hell und dunkel. Si
 
 ## Plattformen und Pakete
 
-| System                       | Pakete                                                                                            |
-| ---------------------------- | ------------------------------------------------------------------------------------------------- |
-| Linux (x86_64, arm64)        | `.deb` (Debian, Ubuntu, Linux Mint), `.rpm` (Fedora, openSUSE), AppImage; Flatpak und AUR geplant |
-| macOS (Apple Silicon, Intel) | `.dmg`                                                                                            |
-| Windows 10/11                | `.msi`, Setup-`.exe`                                                                              |
+| System                       | Pakete                                                                                                |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Linux (x86_64, arm64)        | `.deb` (Debian, Ubuntu, Linux Mint), `.rpm` (Fedora, openSUSE), AppImage; Flatpak und AUR vorbereitet |
+| macOS (Apple Silicon, Intel) | `.dmg`                                                                                                |
+| Windows 10/11                | `.msi`, Setup-`.exe`                                                                                  |
 
 Unterstützte NAS: DSM 7.3 und neuer. Ältere DSM-7-Versionen können für die Grundfunktionen funktionieren.
 

@@ -38,6 +38,9 @@ Everything that changes a NAS (SSH setup, recipes, Web Station, Nextcloud) is te
 | Memory test                | No Synology Assistant boot test in a VM | Protocol tests against recorded packets; final test on real hardware                        |
 | Fan, LEDs, beeper          | No hardware                             | Mock server                                                                                 |
 | Kernel work                | Different kernel and boot path          | Separate project, spare hardware with serial console                                        |
+| Containers                 | See below                               | Mock data in the interface; final test on a NAS or a full VM                                |
+
+Installing Container Manager in the Virtual DSM **container** (vdsm-docker) made it unreachable after the next start: Docker's network setup inside DSM cuts off the port forwarding of the container. Take a snapshot before trying, or test containers in a full VM.
 
 ### Suggested setup
 

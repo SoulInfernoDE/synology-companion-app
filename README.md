@@ -13,11 +13,11 @@
 
 It is made for **regular users without shell experience**. Everything that touches the system beyond what DSM offers sits behind an **expert mode**, shows the exact commands before it runs them, makes a backup first and can be undone.
 
-> **Status: pre-alpha, version 0.3.** Finding NAS, first-time setup, signing in (with 2FA and certificate check), the dashboard with updates, restart and shutdown, shared folders, Wake-on-LAN, tray notifications, several NAS side by side and SSH with a key (diagnostics, terminal) work; the basics are tested against a Virtual DSM 7.4.1. Downloads: [releases](https://github.com/SoulInfernoDE/synology-companion-app/releases). See the [roadmap](ROADMAP.md).
+> **Status: everything planned for 1.0 is on the main branch; the latest published release is 0.2.** The basics are tested against a Virtual DSM; packages, containers, recipes and Nextcloud are tested against a stand-in DSM and still need testing on real hardware. Downloads: [releases](https://github.com/SoulInfernoDE/synology-companion-app/releases). See the [roadmap](ROADMAP.md).
 >
 > Syno Companion is an independent community project. It is not affiliated with, endorsed by or supported by Synology Inc. "Synology" and "DSM" are trademarks of Synology Inc.
 
-## Planned features
+## Features
 
 **Everyday (no expert mode needed)**
 
@@ -27,22 +27,26 @@ It is made for **regular users without shell experience**. Everything that touch
 - **Tray and notifications:** degraded volume, failed backup, drive warnings, new updates.
 - **Control:** Wake-on-LAN, restart, shut down, silence the beeper.
 - **Shared folders with one click:** mounted in the file manager (Nemo/Nautilus/Dolphin, Finder, Explorer).
-- **Download Station:** hand over links, torrent files and `magnet:` links.
+- **Download Station:** follow downloads, add HTTP, FTP and `magnet:` links, pause, resume and remove them.
 - **SSH made easy:** the app enables SSH on request, creates a key of its own for this computer, installs it on the NAS with the permissions sshd expects and pins the host key. Afterwards it works on the NAS without asking for a password; `sudo` passwords stay in the keychain and are never passed on a command line. Diagnostics show what DSM hides (kernel, `io_uring`, memory modules, network drivers), and expert mode adds a terminal.
-- **Package sources:** add community sources such as [SynoCommunity](https://synocommunity.com) and browse their packages.
+- **Packages:** install and update packages from Synology and from community sources such as [SynoCommunity](https://synocommunity.com), with the packages they depend on.
+- **Containers:** see which containers of Container Manager run an older image than their tag offers, and update Compose projects.
 
 **Expert mode**
 
 - **Third-party drives:** add HDDs, SSDs and NVMe drives that are not in Synology's compatibility database, based on [007revad/Synology_HDD_db](https://github.com/007revad/Synology_HDD_db).
 - **Extension catalog:** community scripts from GitHub as _recipes_: pinned version and checksum, preview of every command, backup, apply, check, undo.
-- **Component updates:** update container images; update Container Manager's Docker engine beyond the version Synology ships.
-- **After a DSM update:** the app notices the new DSM version and offers to re-apply every fix that the update removed, in one step.
-- **Memory test** like in Synology Assistant (research, see roadmap).
-- **System diagnostics:** kernel version and kernel features such as `io_uring`.
+- **After a DSM update:** the app notices the new DSM version and offers to re-apply every recipe the update removed, with the options of the last run; an optional boot task on the NAS does it without the app.
+- **Journal:** every recipe run is written to a journal on the NAS, exportable as JSON.
 
-**Nextcloud (v1.x)**
+**Nextcloud**
 
-A dedicated tab for Nextcloud on Web Station: check which MariaDB, Redis and PHP versions the NAS can offer against what the next Nextcloud release needs, take a snapshot and database dump, open the permissions, run the updater, run `occ upgrade`, close the permissions again. One button instead of an evening of shell commands.
+A dedicated tab for Nextcloud on Web Station: it shows the version, PHP, database and Redis, checks the PHP version against what the next Nextcloud release needs, and updates in visible steps: database dump, maintenance mode, open the permissions, Nextcloud's updater, `occ upgrade`, missing indices, close the permissions again. Each step can be followed and resumed. One button instead of an evening of shell commands.
+
+**Not yet**
+
+- Updating Container Manager's Docker engine: there is no maintained script for current Container Manager versions yet.
+- Starting the memory test from the app: the app shows the results of Synology Assistant's test; starting it needs research on real hardware.
 
 **v2.0**
 
@@ -58,11 +62,11 @@ The app has **skins** for Linux, macOS and Windows, each in light and dark. It p
 
 ## Platforms and packages
 
-| System                       | Packages                                                                                          |
-| ---------------------------- | ------------------------------------------------------------------------------------------------- |
-| Linux (x86_64, arm64)        | `.deb` (Debian, Ubuntu, Linux Mint), `.rpm` (Fedora, openSUSE), AppImage; Flatpak and AUR planned |
-| macOS (Apple silicon, Intel) | `.dmg`                                                                                            |
-| Windows 10/11                | `.msi`, setup `.exe`                                                                              |
+| System                       | Packages                                                                                           |
+| ---------------------------- | -------------------------------------------------------------------------------------------------- |
+| Linux (x86_64, arm64)        | `.deb` (Debian, Ubuntu, Linux Mint), `.rpm` (Fedora, openSUSE), AppImage; Flatpak and AUR prepared |
+| macOS (Apple silicon, Intel) | `.dmg`                                                                                             |
+| Windows 10/11                | `.msi`, setup `.exe`                                                                               |
 
 Supported NAS: DSM 7.3 and newer. Older DSM 7 versions may work for the basic features.
 

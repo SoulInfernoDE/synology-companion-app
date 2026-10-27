@@ -38,6 +38,9 @@ Alles, was ein NAS verändert (SSH-Einrichtung, Rezepte, Web Station, Nextcloud)
 | Speichertest                            | Kein Boot-Test des Synology Assistant in einer VM | Protokolltests mit aufgezeichneten Paketen; Abschlusstest auf echter Hardware                        |
 | Lüfter, LEDs, Piepton                   | Keine Hardware                                    | Nachgebauter Server                                                                                  |
 | Kernel-Arbeit                           | Anderer Kernel und Bootweg                        | Eigenes Projekt, Ersatzhardware mit serieller Konsole                                                |
+| Container                               | Siehe unten                                       | Beispieldaten in der Oberfläche; Abschlusstest an einem NAS oder einer vollen VM                     |
+
+Container Manager im Virtual-DSM-**Container** (vdsm-docker) zu installieren, hat ihn nach dem nächsten Start unerreichbar gemacht: Das Netzwerk-Setup von Docker in DSM kappt die Portweiterleitung des Containers. Vorher einen Snapshot anlegen oder Container in einer vollen VM testen.
 
 ### Vorgeschlagener Aufbau
 
