@@ -70,17 +70,81 @@ impl Connection {
         Ok(parse(&self.run(SCRIPT).await?.stdout))
     }
 
-    /// The installed memory modules, read with `dmidecode` as root.
-    pub async fn memory_modules(&self, password: &str) -> Result<Vec<MemoryModule>, Error> {
-        let output = self.run_sudo("dmidecode -t 17", password).await?;
+    /// The installed memory modules (`dmidecode`) and the results of the memory
+    /// tests Synology Assistant ran, which `findhostd` logs. Both need root.
+    pub async fn memory(&self, password: &str) -> Result<Memory, Error> {
+        let output = self
+            .run_sudo(
+                "dmidecode -t 17; echo @@memtest; grep -h 'Memtest' /var/log/messages* 2>/dev/null | tail -n 20; true",
+                password,
+            )
+            .await?;
         if output.sudo_refused() {
             return Err(Error::AuthFailed);
         }
         if !output.success() {
             return Err(Error::Protocol(output.stderr.trim().to_owned()));
         }
-        Ok(parse_memory(&output.stdout))
+        let (modules, tests) = output
+            .stdout
+            .split_once("@@memtest")
+            .unwrap_or((output.stdout.as_str(), ""));
+        Ok(Memory {
+            modules: parse_memory(modules),
+            tests: parse_memtests(tests),
+        })
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Memory {
+    pub modules: Vec<MemoryModule>,
+    /// Memory tests found in the system log, oldest first.
+    pub tests: Vec<MemoryTest>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MemoryTest {
+    /// Time stamp as the log has it, "2021-07-22T13:26:01-07:00".
+    pub time: String,
+    pub passed: bool,
+    /// The error number of a failed test; Synology does not document them.
+    pub error: Option<u32>,
+}
+
+/// Lines such as `… findhostd: util_fhost.c:1378 Memtest passed!` or
+/// `… Memtest failed! Err=4.`; the same result may be logged twice.
+pub(crate) fn parse_memtests(text: &str) -> Vec<MemoryTest> {
+    let mut tests: Vec<MemoryTest> = Vec::new();
+    for line in text.lines() {
+        let Some(at) = line.find("Memtest ") else {
+            continue;
+        };
+        let result = &line[at + 8..];
+        let passed = result.starts_with("passed");
+        if !passed && !result.starts_with("failed") {
+            continue;
+        }
+        let error = result
+            .split_once("Err=")
+            .and_then(|(_, rest)| rest.trim_end_matches(['.', ' ']).parse().ok());
+        let time = line
+            .split_whitespace()
+            .next()
+            .unwrap_or_default()
+            .to_owned();
+        let test = MemoryTest {
+            time,
+            passed,
+            error,
+        };
+        if tests.last() != Some(&test) {
+            tests.push(test);
+        }
+    }
+    tests
 }
 
 fn sections(text: &str) -> impl Iterator<Item = (&str, Vec<&str>)> {
@@ -224,6 +288,20 @@ mod tests {
         assert_eq!(state("4\n0\n"), IoUring::Available);
         assert_eq!(state("4\n2\n"), IoUring::Disabled);
         assert_eq!(state(""), IoUring::Missing);
+    }
+
+    #[test]
+    fn reads_memory_tests() {
+        let text = "2021-07-22T13:26:01-07:00 NAS findhostd: util_fhost.c:1378 Memtest passed!\n\
+            2021-07-22T13:26:01-07:00 NAS findhostd: util_fhost.c:1378 Memtest passed!\n\
+            2021-08-01T09:00:00-07:00 NAS findhostd: util_fhost.c:1376 Memtest failed! Err=4.\n\
+            unrelated line\n";
+        let tests = parse_memtests(text);
+        assert_eq!(tests.len(), 2);
+        assert!(tests[0].passed);
+        assert_eq!(tests[0].time, "2021-07-22T13:26:01-07:00");
+        assert!(!tests[1].passed);
+        assert_eq!(tests[1].error, Some(4));
     }
 
     #[test]

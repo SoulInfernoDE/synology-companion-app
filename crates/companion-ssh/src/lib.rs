@@ -14,6 +14,7 @@ use russh::keys::{HashAlg, PrivateKey, PrivateKeyWithHashAlg, PublicKey, PublicK
 use russh::{ChannelMsg, Disconnect};
 use tokio::sync::mpsc;
 
+pub mod containers;
 pub mod diagnostics;
 pub mod packages;
 
@@ -254,16 +255,32 @@ impl Connection {
         self.exec(command, Some(input)).await
     }
 
-    /// Runs `command` as root. The password reaches `sudo` on its standard input,
+    /// Runs `command` as root. `-k` makes `sudo` always read the password, so it
+    /// never reaches the command. The password reaches `sudo` on its standard input,
     /// so it never appears on a command line; the command itself gets no input.
     pub async fn run_sudo(&self, command: &str, password: &str) -> Result<Output, Error> {
         let wrapped = format!(
-            "sudo -S -p '' -- sh -c {}",
+            "sudo -k -S -p '' -- sh -c {}",
             quote(&format!("exec 0</dev/null; {command}"))
         );
         let mut input = password.as_bytes().to_vec();
         input.push(b'\n');
         self.exec(&wrapped, Some(&input)).await
+    }
+
+    /// Runs `command` as root and gives it `input` on standard input, after the
+    /// password line that `sudo` reads.
+    pub async fn run_sudo_with_input(
+        &self,
+        command: &str,
+        password: &str,
+        input: &[u8],
+    ) -> Result<Output, Error> {
+        let wrapped = format!("sudo -k -S -p '' -- sh -c {}", quote(command));
+        let mut data = password.as_bytes().to_vec();
+        data.push(b'\n');
+        data.extend_from_slice(input);
+        self.exec(&wrapped, Some(&data)).await
     }
 
     /// An interactive shell with a terminal of `cols` × `rows`.

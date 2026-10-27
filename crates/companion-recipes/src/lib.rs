@@ -10,6 +10,8 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use companion_ssh::{Connection, Output, quote};
+
+pub mod boot;
 use serde::{Deserialize, Serialize};
 
 /// The recipes that come with the app.
@@ -443,6 +445,17 @@ pub async fn journal(connection: &Connection) -> Result<Vec<Entry>, Error> {
     Ok(parse_journal(&output.stdout))
 }
 
+/// The last successful `apply` of a recipe that no later `restore` undid; its
+/// options are the ones to use again after a DSM update.
+pub fn last_applied<'a>(entries: &'a [Entry], recipe: &str) -> Option<&'a Entry> {
+    let entry = entries
+        .iter()
+        .rev()
+        .filter(|entry| entry.recipe == recipe && entry.ok)
+        .find(|entry| entry.action == "apply" || entry.action == "restore")?;
+    (entry.action == "apply").then_some(entry)
+}
+
 /// Lines that cannot be read are skipped, so one broken line hides nothing else.
 pub fn parse_journal(text: &str) -> Vec<Entry> {
     text.lines()
@@ -490,6 +503,26 @@ mod tests {
     #[test]
     fn strips_colours() {
         assert_eq!(plain("\u{1b}[0;31mERROR\u{1b}[0m done\r\n"), "ERROR done\n");
+    }
+
+    #[test]
+    fn finds_the_last_apply_that_was_not_undone() {
+        let entry = |time, action: &str, ok| Entry {
+            time,
+            recipe: "r".into(),
+            version: "v1".into(),
+            action: action.into(),
+            options: vec![format!("o{time}")],
+            ok,
+            dsm: "7.2.2-72806".into(),
+            backup: None,
+            by: "x".into(),
+        };
+        let entries = [entry(1, "apply", true), entry(2, "apply", false)];
+        assert_eq!(last_applied(&entries, "r").map(|e| e.time), Some(1));
+        let entries = [entry(1, "apply", true), entry(2, "restore", true)];
+        assert_eq!(last_applied(&entries, "r"), None);
+        assert_eq!(last_applied(&entries, "other"), None);
     }
 
     #[test]

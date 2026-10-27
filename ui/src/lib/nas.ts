@@ -2,8 +2,10 @@
 // in demo mode they come from `demoOverview`.
 
 import type {
+  Container,
   Diagnostics,
   JournalEntry,
+  Memory,
   MemoryModule,
   Package,
   RecipeState,
@@ -306,6 +308,8 @@ export const demoRecipes: RecipeState[] = [
       ],
     },
     status: { applied: true, supported: true, dsm: '7.2.2-72806' },
+    lastApplied: null,
+    removed: false,
   },
 ];
 
@@ -323,3 +327,35 @@ export const demoJournal: JournalEntry[] = [
     by: 'Syno Companion (Linux)',
   },
 ];
+
+export const demoContainers: Container[] = [
+  {
+    name: 'nextcloud-app',
+    image: 'nextcloud:30-apache',
+    state: 'running',
+    project: 'nextcloud',
+    projectDir: '/volume1/docker/nextcloud',
+    update: true,
+  },
+  {
+    name: 'nextcloud-db',
+    image: 'mariadb:11.4',
+    state: 'running',
+    project: 'nextcloud',
+    projectDir: '/volume1/docker/nextcloud',
+    update: false,
+  },
+  {
+    name: 'pihole',
+    image: 'pihole/pihole:latest',
+    state: 'running',
+    project: null,
+    projectDir: null,
+    update: true,
+  },
+];
+
+export const demoMemoryReport: Memory = {
+  modules: demoMemory,
+  tests: [{ time: '2026-03-14T10:12:40+01:00', passed: true, error: null }],
+};

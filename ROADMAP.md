@@ -46,14 +46,15 @@ Each version is usable on its own. Features that change the NAS beyond DSM's own
 - [x] Journal of every change, kept on the NAS, exportable
 - [x] First recipe: third-party drives (Synology_HDD_db), including restore
 - [x] Package sources: add SynoCommunity and other feeds, browse and install their packages (with the packages they depend on)
-- [ ] Container images: check for newer images and recreate containers
+- [x] Container images: check for newer images and recreate the containers of Container Manager projects (single containers: a hint to reset them in Container Manager)
 
 ## v0.5 – After the update
 
-- [ ] Detect a new DSM version and offer to re-apply every recipe it removed
-- [ ] Optional boot task on the NAS that re-applies recipes without the app
-- [ ] Update the Docker engine of Container Manager (recipe, expert mode)
-- [ ] Memory test like Synology Assistant: research the protocol Synology Assistant uses to start the built-in test; fallback `memtester` over SSH (cannot test memory in use by DSM)
+- [x] Detect a new DSM version (notification) and offer to re-apply every recipe it removed, with the options of the last run
+- [x] Optional boot task on the NAS that re-applies recipes without the app
+- [ ] Update the Docker engine of Container Manager (recipe, expert mode). Researched: the known script ([markdumay/synology-docker](https://github.com/markdumay/synology-docker), last release 2021) was tested only up to DSM 7.0.1, before Container Manager. Not offered until a maintained script exists.
+- [x] Memory test results: `findhostd` logs the result of Synology Assistant's test ("Memtest passed!" or "Memtest failed! Err=…") in `/var/log/messages`; the diagnostics show it next to the memory modules
+- [ ] Start the memory test from the app: Synology Assistant asks `findhostd` over UDP 9999 to restart into the test. The command has to be captured from Synology Assistant on real hardware first (Virtual DSM has no memory test). `memtester` over SSH was dropped: it cannot test the memory DSM uses, which is where faults matter.
 
 ## v1.0 – Nextcloud and stable releases
 

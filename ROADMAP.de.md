@@ -46,14 +46,15 @@ Jede Version ist für sich nutzbar. Funktionen, die das NAS über DSMs eigene Ei
 - [x] Protokoll jeder Änderung, auf dem NAS gespeichert, exportierbar
 - [x] Erstes Rezept: Festplatten von Drittanbietern (Synology_HDD_db), mit Wiederherstellung
 - [x] Paketquellen: SynoCommunity und andere Quellen hinzufügen, Pakete durchsuchen und installieren (samt der Pakete, die sie brauchen)
-- [ ] Container-Images: auf neuere Images prüfen und Container neu erstellen
+- [x] Container-Images: auf neuere Images prüfen und die Container von Container-Manager-Projekten neu erstellen (einzelne Container: Hinweis, sie in Container Manager zurückzusetzen)
 
 ## v0.5 – Nach dem Update
 
-- [ ] Neue DSM-Version erkennen und anbieten, alle Rezepte wieder einzuspielen, die sie entfernt hat
-- [ ] Optionale Startaufgabe auf dem NAS, die Rezepte auch ohne die App wieder einspielt
-- [ ] Docker-Engine von Container Manager aktualisieren (Rezept, Expertenmodus)
-- [ ] Speichertest wie im Synology Assistant: das Protokoll erforschen, mit dem Synology Assistant den eingebauten Test startet; Ausweichlösung `memtester` über SSH (kann den von DSM belegten Speicher nicht testen)
+- [x] Neue DSM-Version erkennen (Benachrichtigung) und anbieten, alle Rezepte wieder einzuspielen, die sie entfernt hat, mit den Optionen des letzten Laufs
+- [x] Optionale Startaufgabe auf dem NAS, die Rezepte auch ohne die App wieder einspielt
+- [ ] Docker-Engine von Container Manager aktualisieren (Rezept, Expertenmodus). Recherchiert: Das bekannte Skript ([markdumay/synology-docker](https://github.com/markdumay/synology-docker), letztes Release 2021) ist nur bis DSM 7.0.1 getestet, vor Container Manager. Wird nicht angeboten, bis es ein gepflegtes Skript gibt.
+- [x] Ergebnisse des Speichertests: `findhostd` schreibt das Ergebnis des Tests aus dem Synology Assistant („Memtest passed!“ oder „Memtest failed! Err=…“) nach `/var/log/messages`; die Diagnose zeigt es neben den Speichermodulen
+- [ ] Den Speichertest aus der App starten: Synology Assistant bittet `findhostd` über UDP 9999, in den Test neu zu starten. Der Befehl muss erst an echter Hardware aus dem Synology Assistant mitgeschnitten werden (Virtual DSM hat keinen Speichertest). `memtester` über SSH entfällt: Es kann den von DSM belegten Speicher nicht testen, und genau dort zählen Fehler.
 
 ## v1.0 – Nextcloud und stabile Releases
 

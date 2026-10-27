@@ -28,9 +28,15 @@ pub struct RecipeState {
     recipe: Recipe,
     /// `None` without SSH, or when the check could not run.
     status: Option<Status>,
+    /// The last apply the journal knows, unless a restore came after it.
+    last_applied: Option<Entry>,
+    /// Applied according to the journal, but the check says it is gone:
+    /// usually a DSM update replaced the files.
+    removed: bool,
 }
 
-/// The built-in recipes and, when SSH is set up, what their checks say.
+/// The built-in recipes and, when SSH is set up, what their checks and the
+/// journal say.
 #[tauri::command]
 pub async fn recipes(
     state: State<'_, AppState>,
@@ -41,13 +47,24 @@ pub async fn recipes(
         Some(_) => Some(connection(&ssh, &device).await?),
         None => None,
     };
+    let entries = match &open {
+        Some(open) => companion_recipes::journal(open).await?,
+        None => Vec::new(),
+    };
     let mut result = Vec::new();
     for recipe in companion_recipes::builtin() {
         let status = match &open {
             Some(open) => Some(recipe.status(open).await?),
             None => None,
         };
-        result.push(RecipeState { recipe, status });
+        let last_applied = companion_recipes::last_applied(&entries, &recipe.id).cloned();
+        let removed = last_applied.is_some() && status.as_ref().is_some_and(|s| !s.applied);
+        result.push(RecipeState {
+            recipe,
+            status,
+            last_applied,
+            removed,
+        });
     }
     Ok(result)
 }
@@ -148,4 +165,37 @@ pub async fn export_journal(
         .map_err(|error| Failure::new("storage", error.to_string()))?;
     std::fs::write(path, text).map_err(|error| Failure::new("storage", error.to_string()))?;
     Ok(true)
+}
+
+/// Whether the boot task that applies removed recipes again is set up.
+#[tauri::command]
+pub async fn boot_task(
+    state: State<'_, AppState>,
+    ssh: State<'_, SshState>,
+) -> Result<bool, Failure> {
+    let device = state.current_device().await?;
+    let open = connection(&ssh, &device).await?;
+    Ok(companion_recipes::boot::installed(&open).await?)
+}
+
+/// Sets up (`enable`) or removes the boot task. Setting it up again refreshes
+/// the recipes and options it applies from the journal.
+#[tauri::command]
+pub async fn set_boot_task(
+    enable: bool,
+    password: Option<String>,
+    state: State<'_, AppState>,
+    ssh: State<'_, SshState>,
+) -> Result<bool, Failure> {
+    let device = state.current_device().await?;
+    let password = self::password(password, &device).await?;
+    let open = connection(&ssh, &device).await?;
+    if enable {
+        let entries = companion_recipes::journal(&open).await?;
+        companion_recipes::boot::install(&open, &companion_recipes::builtin(), &entries, &password)
+            .await?;
+    } else {
+        companion_recipes::boot::remove(&open, &password).await?;
+    }
+    Ok(companion_recipes::boot::installed(&open).await?)
 }

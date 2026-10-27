@@ -19,9 +19,10 @@ import type {
   TerminalEvent,
 } from './backend';
 import {
+  demoContainers,
   demoDiagnostics,
   demoJournal,
-  demoMemory,
+  demoMemoryReport,
   demoOverview,
   demoPackages,
   demoRecipes,
@@ -153,11 +154,15 @@ async function completeSetup(request: CompleteSetupRequest) {
   return { device, skipped: [], signedIn: true };
 }
 
+// The journal says applied, the check says no: as after a DSM update.
 let mockRecipes = demoRecipes.map((state) => ({
   ...state,
   status: state.status && { ...state.status, applied: false },
+  lastApplied: demoJournal[0] ?? null,
+  removed: true,
 }));
 let mockJournal = [...demoJournal];
+let mockBoot = false;
 
 async function recipeRun(args: Record<string, unknown>, action: 'apply' | 'restore') {
   await wait(1500);
@@ -188,6 +193,7 @@ async function recipeRun(args: Record<string, unknown>, action: 'apply' | 'resto
 }
 
 let sshEnabled = false;
+let mockContainers = demoContainers;
 let mockPackages = demoPackages;
 let mockSources = { feeds: [] as { name: string; url: string }[], trustLevel: 0 };
 let terminalOutput: ((text: string) => void) | null = null;
@@ -257,7 +263,7 @@ const commands: Record<string, (args: Record<string, unknown>) => Promise<unknow
     await wait(500);
     if (args.password === undefined) throw { key: 'password-required' };
     if (args.password !== 'demo') throw { key: 'sudo' };
-    return demoMemory;
+    return demoMemoryReport;
   },
   terminal_open: async (args) => {
     const events = args.events as Channel<TerminalEvent>;
@@ -302,10 +308,30 @@ const commands: Record<string, (args: Record<string, unknown>) => Promise<unknow
     return [pkg.name];
   },
   recipes: async () => (await wait(500), mockRecipes),
+  boot_task: async () => mockBoot,
+  set_boot_task: async (args) => {
+    await wait(800);
+    if (args.password === undefined) throw { key: 'password-required' };
+    mockBoot = Boolean(args.enable);
+    return mockBoot;
+  },
   journal: async () => mockJournal,
   export_journal: async () => true,
   recipe_apply: async (args) => recipeRun(args, 'apply'),
   recipe_restore: async (args) => recipeRun(args, 'restore'),
+  containers: async (args) => {
+    await wait(args.pull ? 1500 : 500);
+    if (args.password === undefined) throw { key: 'password-required' };
+    if (args.password !== 'demo') throw { key: 'sudo' };
+    return mockContainers;
+  },
+  update_project: async (args) => {
+    await wait(1500);
+    mockContainers = mockContainers.map((c) =>
+      c.project === args.project ? { ...c, update: false } : c,
+    );
+    return 'Recreated';
+  },
   forget_device: async (args) => {
     saved = saved.filter((device) => device.id !== args.id);
   },

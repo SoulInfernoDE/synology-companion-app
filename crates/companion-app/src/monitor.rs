@@ -115,6 +115,17 @@ fn changes(before: Option<&Status>, now: &Status, texts: &Texts) -> Vec<String> 
     messages
 }
 
+/// After a DSM update: a reminder that recipes may have to be applied again.
+fn dsm_changed(before: Option<&String>, now: &str, texts: &Texts) -> Option<String> {
+    let before = before?;
+    if before == now || now.is_empty() {
+        return None;
+    }
+    let mut args = FluentArgs::new();
+    args.set("version", now.to_owned());
+    Some(texts.get("notify-dsm-installed", Some(&args)))
+}
+
 fn tray_text(name: &str, status: &Status, texts: &Texts) -> String {
     let mut args = FluentArgs::new();
     args.set("name", name.to_owned());
@@ -146,6 +157,9 @@ struct Watch {
 /// Runs for the lifetime of the app and watches every signed-in NAS.
 pub async fn run(app: AppHandle) {
     let mut watches: HashMap<String, Watch> = HashMap::new();
+    // DSM versions seen per NAS; kept across sign-outs, because a DSM update
+    // restarts the NAS and ends the session.
+    let mut versions: HashMap<String, String> = HashMap::new();
     let mut shown: Option<String> = None;
     // A short first wait, so the tray shows the state soon after signing in.
     let mut wait = Duration::from_secs(5);
@@ -161,7 +175,15 @@ pub async fn run(app: AppHandle) {
         for target in &targets {
             let watch = watches.entry(target.id.clone()).or_default();
             let status = match target.client.overview(&target.session).await {
-                Ok(overview) => Status::from_overview(&overview, &state.texts()),
+                Ok(overview) => {
+                    if let Some(message) =
+                        dsm_changed(versions.get(&target.id), &overview.dsm, &state.texts())
+                    {
+                        notify(&app, &target.name, &message);
+                    }
+                    versions.insert(target.id.clone(), overview.dsm.clone());
+                    Status::from_overview(&overview, &state.texts())
+                }
                 Err(Error::Network(_)) => Status::unreachable(),
                 // An ended session is renewed by the interface; keep the last state.
                 Err(_) => {
@@ -252,6 +274,18 @@ mod tests {
         assert_eq!(
             changes(Some(&down), &up, &texts),
             ["The NAS answers again."]
+        );
+    }
+
+    #[test]
+    fn tells_once_when_dsm_was_updated() {
+        let texts = Texts::new(Some("en"));
+        let old = "DSM 7.2.2-72806".to_owned();
+        assert_eq!(dsm_changed(None, "DSM 7.2.2-72806", &texts), None);
+        assert_eq!(dsm_changed(Some(&old), "DSM 7.2.2-72806", &texts), None);
+        assert!(
+            dsm_changed(Some(&old), "DSM 7.3-81180", &texts)
+                .is_some_and(|message| message.contains("DSM 7.3-81180"))
         );
     }
 

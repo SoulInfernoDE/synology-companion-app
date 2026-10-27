@@ -5,11 +5,13 @@
   import Puzzle from '@lucide/svelte/icons/puzzle';
   import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
   import {
+    bootTask,
     exportJournal,
     journal as fetchJournal,
     recipeApply,
     recipeRestore,
     recipes as fetchRecipes,
+    setBootTask,
     toFailure,
     type Failure,
     type JournalEntry,
@@ -44,6 +46,10 @@
   let busy = $state<string | null>(null);
   let result = $state<{ id: string; action: Action; run: RecipeRun } | null>(null);
   let exported = $state(false);
+  /** The boot task that applies removed recipes again; `null` while unknown. */
+  let boot = $state<boolean | null>(null);
+  let bootBusy = $state(false);
+  let bootPassword = $state(false);
 
   const linked = $derived(demo || device?.ssh !== undefined);
 
@@ -52,16 +58,20 @@
     if (demo) {
       states = demoRecipes;
       entries = demoJournal;
+      boot = false;
     } else {
       try {
         states = await fetchRecipes();
         entries = linked ? await fetchJournal() : [];
+        boot = linked ? await bootTask() : null;
       } catch (error) {
         failure = toFailure(error);
       }
     }
-    for (const { recipe } of states ?? []) {
-      chosen[recipe.id] ??= recipe.options.filter((option) => option.default).map((o) => o.id);
+    // After a DSM update, the options of the last run are the ones to use again.
+    for (const { recipe, lastApplied } of states ?? []) {
+      chosen[recipe.id] ??=
+        lastApplied?.options ?? recipe.options.filter((option) => option.default).map((o) => o.id);
     }
   }
 
@@ -89,6 +99,8 @@
       result = { id, action, run: outcome };
       confirming = null;
       needsPassword = false;
+      // A boot task that is set up learns about the new run right away.
+      if (boot) await setBootTask(true, secret).catch(() => undefined);
       await load();
     } catch (error) {
       const reason = toFailure(error);
@@ -99,6 +111,24 @@
       }
     } finally {
       busy = null;
+    }
+  }
+
+  async function toggleBoot() {
+    bootBusy = true;
+    failure = null;
+    try {
+      boot = await setBootTask(!boot, password === '' ? undefined : password);
+      bootPassword = false;
+    } catch (error) {
+      const reason = toFailure(error);
+      if (reason.key === 'password-required') bootPassword = true;
+      else {
+        if (reason.key === 'sudo') password = '';
+        failure = reason;
+      }
+    } finally {
+      bootBusy = false;
     }
   }
 
@@ -137,6 +167,12 @@
     </p>
   {/if}
 
+  {#if states?.some((state) => state.removed)}
+    <p class="hint">
+      <span>{t('extensions-removed-hint')}</span>
+    </p>
+  {/if}
+
   {#if failure}
     <p class="failure" role="alert">
       {t(`error-${failure.key}`)}
@@ -144,7 +180,7 @@
     </p>
   {/if}
 
-  {#each states ?? [] as { recipe, status } (recipe.id)}
+  {#each states ?? [] as { recipe, status, removed } (recipe.id)}
     <section class="card recipe">
       <div class="head">
         <span class="icon"><Puzzle size={20} aria-hidden="true" /></span>
@@ -155,7 +191,9 @@
             {recipe.version}
           </span>
         </div>
-        {#if status?.applied}
+        {#if removed}
+          <span class="badge warning">{t('extensions-removed')}</span>
+        {:else if status?.applied}
           <span class="badge success">{t('extensions-applied')}</span>
         {:else if status && !status.supported}
           <span class="badge danger">{t('extensions-unsupported', { dsm: recipe.dsm })}</span>
@@ -294,6 +332,44 @@
     {#if !failure}<p class="muted">{t('overview-loading')}</p>{/if}
   {/each}
 
+  <section class="card stack">
+    <div class="head">
+      <div class="grow">
+        <h2>{t('extensions-boot-title')}</h2>
+        <span class="muted">{t('extensions-boot-text')}</span>
+      </div>
+      {#if boot !== null}
+        <span class="badge" class:success={boot}>
+          {t(boot ? 'extensions-boot-on' : 'extensions-boot-off')}
+        </span>
+      {/if}
+    </div>
+    {#if bootPassword}
+      <label class="field">
+        <span>{t('ssh-diag-memory-password')}</span>
+        <input
+          class="input"
+          type="password"
+          bind:value={password}
+          autocomplete="current-password"
+        />
+      </label>
+    {/if}
+    <div class="actions">
+      <button
+        class="button"
+        disabled={demo || !linked || boot === null || bootBusy}
+        onclick={toggleBoot}
+      >
+        {#if bootBusy}
+          {t('extensions-running')}
+        {:else}
+          {t(boot ? 'extensions-boot-remove' : 'extensions-boot-add')}
+        {/if}
+      </button>
+    </div>
+  </section>
+
   <section class="card">
     <div class="head">
       <h2 class="grow">{t('extensions-journal')}</h2>
@@ -343,6 +419,7 @@
 
   header,
   .recipe,
+  .stack,
   .plan {
     display: flex;
     flex-direction: column;

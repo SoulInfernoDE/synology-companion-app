@@ -8,7 +8,7 @@ use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::{Arc, Mutex};
 
 use companion_dsm::Package;
-use companion_ssh::diagnostics::{Diagnostics, MemoryModule};
+use companion_ssh::diagnostics::{Diagnostics, Memory};
 use companion_ssh::{Auth, Connection, ShellWriter};
 use serde::{Deserialize, Serialize};
 use tauri::State;
@@ -271,7 +271,7 @@ pub async fn memory_modules(
     password: Option<String>,
     state: State<'_, AppState>,
     ssh: State<'_, SshState>,
-) -> Result<Vec<MemoryModule>, Failure> {
+) -> Result<Memory, Failure> {
     let device = state.current_device().await?;
     let password = match password {
         Some(password) => password,
@@ -280,12 +280,10 @@ pub async fn memory_modules(
             .ok_or_else(|| Failure::new("password-required", None))?,
     };
     let open = connection(&ssh, &device).await?;
-    open.memory_modules(&password)
-        .await
-        .map_err(|error| match error {
-            companion_ssh::Error::AuthFailed => Failure::new("sudo", None),
-            other => other.into(),
-        })
+    open.memory(&password).await.map_err(|error| match error {
+        companion_ssh::Error::AuthFailed => Failure::new("sudo", None),
+        other => other.into(),
+    })
 }
 
 /// What a terminal sends to the interface.
@@ -489,4 +487,54 @@ mod tests {
         let catalogue = [package("app", false, &["gone"])];
         assert_eq!(install_order("app", &catalogue).unwrap_err(), "gone");
     }
+}
+
+/// Turns the outcome of a Docker run into a result for the interface.
+fn docker<T>(outcome: companion_ssh::containers::Outcome<T>) -> Result<T, Failure> {
+    use companion_ssh::containers::Outcome;
+    match outcome {
+        Outcome::Done(value) => Ok(value),
+        Outcome::SudoRefused => Err(Failure::new("sudo", None)),
+        Outcome::NoDocker => Err(Failure::new("no-docker", None)),
+        Outcome::Failed(reason) => Err(Failure::new("containers", reason)),
+    }
+}
+
+async fn sudo_password(password: Option<String>, device: &KnownDevice) -> Result<String, Failure> {
+    match password {
+        Some(password) => Ok(password),
+        None => stored_password(device)
+            .await
+            .ok_or_else(|| Failure::new("password-required", None)),
+    }
+}
+
+/// The containers of the active NAS; with `pull`, after fetching their images
+/// again, so `update` says which run an older image than their tag.
+#[tauri::command]
+pub async fn containers(
+    pull: bool,
+    password: Option<String>,
+    state: State<'_, AppState>,
+    ssh: State<'_, SshState>,
+) -> Result<Vec<companion_ssh::containers::Container>, Failure> {
+    let device = state.current_device().await?;
+    let password = sudo_password(password, &device).await?;
+    let open = connection(&ssh, &device).await?;
+    docker(open.containers(pull, &password).await?)
+}
+
+/// Recreates the containers of a Container Manager project with current images.
+#[tauri::command]
+pub async fn update_project(
+    project: String,
+    dir: String,
+    password: Option<String>,
+    state: State<'_, AppState>,
+    ssh: State<'_, SshState>,
+) -> Result<String, Failure> {
+    let device = state.current_device().await?;
+    let password = sudo_password(password, &device).await?;
+    let open = connection(&ssh, &device).await?;
+    docker(open.update_project(&project, &dir, &password).await?)
 }

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Containers from './components/Containers.svelte';
   import Extensions from './components/Extensions.svelte';
   import LiveOverview from './components/LiveOverview.svelte';
   import Overview from './components/Overview.svelte';
@@ -113,6 +114,12 @@
           <Shares {demo} />
         {:else if section === 'packages'}
           <Packages
+            {demo}
+            device={demo ? null : (sessions.devices.find((d) => d.id === sessions.current) ?? null)}
+            onssh={() => (section = 'ssh')}
+          />
+        {:else if section === 'containers'}
+          <Containers
             {demo}
             device={demo ? null : (sessions.devices.find((d) => d.id === sessions.current) ?? null)}
             onssh={() => (section = 'ssh')}

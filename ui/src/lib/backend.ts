@@ -281,8 +281,19 @@ export const enableSsh = (port: number) => invoke<void>('enable_ssh', { port });
 export const sshLink = (request: LinkRequest) => invoke<LinkOutcome>('ssh_link', { request });
 export const sshUnlink = () => invoke<void>('ssh_unlink');
 export const diagnostics = () => invoke<Diagnostics>('diagnostics');
-export const memoryModules = (password?: string) =>
-  invoke<MemoryModule[]>('memory_modules', { password });
+export interface MemoryTest {
+  time: string;
+  passed: boolean;
+  error: number | null;
+}
+
+export interface Memory {
+  modules: MemoryModule[];
+  /** Memory tests of Synology Assistant found in the system log. */
+  tests: MemoryTest[];
+}
+
+export const memoryModules = (password?: string) => invoke<Memory>('memory_modules', { password });
 
 /** Opens a shell on the current NAS; returns its id. */
 export function terminalOpen(
@@ -372,6 +383,10 @@ export interface RecipeStatus {
 export interface RecipeState {
   recipe: Recipe;
   status: RecipeStatus | null;
+  /** The last apply in the journal that no restore undid. */
+  lastApplied: JournalEntry | null;
+  /** Applied according to the journal but gone now, usually after a DSM update. */
+  removed: boolean;
 }
 
 export interface RecipeRun {
@@ -400,3 +415,21 @@ export const recipeRestore = (id: string, password?: string) =>
   invoke<RecipeRun>('recipe_restore', { id, password });
 export const journal = () => invoke<JournalEntry[]>('journal');
 export const exportJournal = () => invoke<boolean>('export_journal');
+
+export interface Container {
+  name: string;
+  image: string;
+  state: string;
+  project: string | null;
+  projectDir: string | null;
+  /** The tag names a newer image than the one the container runs. */
+  update: boolean;
+}
+
+export const containers = (pull: boolean, password?: string) =>
+  invoke<Container[]>('containers', { pull, password });
+export const updateProject = (project: string, dir: string, password?: string) =>
+  invoke<string>('update_project', { project, dir, password });
+export const bootTask = () => invoke<boolean>('boot_task');
+export const setBootTask = (enable: boolean, password?: string) =>
+  invoke<boolean>('set_boot_task', { enable, password });

@@ -16,12 +16,12 @@
     type Diagnostics,
     type Failure,
     type KnownDevice,
-    type MemoryModule,
+    type Memory,
     type SshService,
   } from '../lib/backend';
   import { bytes } from '../lib/format';
   import { t } from '../lib/i18n.svelte';
-  import { demoDiagnostics, demoMemory } from '../lib/nas';
+  import { demoDiagnostics, demoMemoryReport } from '../lib/nas';
   import { settings } from '../lib/settings.svelte';
 
   let {
@@ -51,7 +51,7 @@
   let report = $state<Diagnostics | null>(null);
   let reportFailure = $state<Failure | null>(null);
   let loadingReport = $state(false);
-  let memory = $state<MemoryModule[] | null>(null);
+  let memory = $state<Memory | null>(null);
   let memoryFailure = $state<Failure | null>(null);
   let memoryPassword = $state('');
   let askMemoryPassword = $state(false);
@@ -168,7 +168,7 @@
 
   async function readMemory() {
     if (demo) {
-      memory = demoMemory;
+      memory = demoMemoryReport;
       return;
     }
     readingMemory = true;
@@ -380,7 +380,7 @@
           <dt>{t('ssh-diag-memory')}</dt>
           <dd>
             {#if memory}
-              {#each memory as module (module.slot)}
+              {#each memory.modules as module (module.slot)}
                 <span class="block">
                   {module.slot}:
                   {module.sizeMb ? bytes(module.sizeMb * 1024 * 1024, 'binary') : '?'}
@@ -394,6 +394,16 @@
                 </span>
               {:else}
                 <span class="subtle">{t('ssh-diag-unknown')}</span>
+              {/each}
+              {#each memory.tests.slice(-3) as test (test.time)}
+                <span class="block test" class:bad={!test.passed}>
+                  {t(test.passed ? 'ssh-diag-memtest-passed' : 'ssh-diag-memtest-failed', {
+                    time: new Date(test.time).toLocaleString(),
+                    error: test.error ?? '?',
+                  })}
+                </span>
+              {:else}
+                <span class="subtle block">{t('ssh-diag-memtest-none')}</span>
               {/each}
             {:else if askMemoryPassword}
               <form
@@ -543,6 +553,15 @@
   dd {
     margin: 0;
     min-width: 0;
+  }
+
+  .test {
+    margin-top: 6px;
+    color: var(--success);
+  }
+
+  .test.bad {
+    color: var(--danger);
   }
 
   .inline {
