@@ -14,6 +14,8 @@ fn api_list() -> Value {
         "SYNO.Core.Network": { "path": "entry.cgi", "minVersion": 1, "maxVersion": 2 },
         "SYNO.Core.System": { "path": "entry.cgi", "minVersion": 1, "maxVersion": 3 },
         "SYNO.Core.System.Utilization": { "path": "entry.cgi", "minVersion": 1, "maxVersion": 1 },
+        "SYNO.Core.Terminal": { "path": "entry.cgi", "minVersion": 1, "maxVersion": 3 },
+        "SYNO.Core.User.Home": { "path": "entry.cgi", "minVersion": 1, "maxVersion": 1 },
         "SYNO.Storage.CGI.Storage": { "path": "entry.cgi", "minVersion": 1, "maxVersion": 1 }
     }})
 }
@@ -447,4 +449,53 @@ async fn setup_counts_as_done_when_the_first_sign_in_wants_a_code() {
             .iter()
             .any(|api| api == "SYNO.Core.QuickStart.Info")
     );
+}
+
+#[tokio::test]
+async fn ssh_service_reads_port_and_home_service() {
+    let (server, client) = mock_nas().await;
+    Mock::given(path("/webapi/entry.cgi"))
+        .and(body_string_contains("method=login"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_json(json!({ "success": true, "data": { "sid": "s" } })),
+        )
+        .mount(&server)
+        .await;
+    Mock::given(path("/webapi/entry.cgi"))
+        .and(body_string_contains(
+            "api=SYNO.Core.Terminal&version=3&method=get",
+        ))
+        .respond_with(ResponseTemplate::new(200).set_body_json(
+            json!({ "success": true, "data": { "enable_ssh": false, "ssh_port": 2222 } }),
+        ))
+        .mount(&server)
+        .await;
+    Mock::given(path("/webapi/entry.cgi"))
+        .and(body_string_contains("api=SYNO.Core.User.Home&"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_json(json!({ "success": false, "error": { "code": 105 } })),
+        )
+        .mount(&server)
+        .await;
+    Mock::given(path("/webapi/entry.cgi"))
+        .and(body_string_contains("method=set"))
+        .and(body_string_contains("enable_ssh=true&ssh_port=2222"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "success": true })))
+        .expect(1)
+        .mount(&server)
+        .await;
+
+    let session = client.login(&credentials()).await.unwrap();
+    let service = client.ssh_service(&session).await.unwrap();
+    assert_eq!(
+        service,
+        SshService {
+            enabled: false,
+            port: 2222,
+            homes: true
+        }
+    );
+    client.enable_ssh(&session, 2222).await.unwrap();
 }

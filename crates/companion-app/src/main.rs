@@ -10,6 +10,7 @@ mod monitor;
 mod preferences;
 mod secrets;
 mod setup;
+mod ssh;
 mod tray;
 
 use tauri::{Manager, WindowEvent};
@@ -32,6 +33,7 @@ fn main() {
                 Err(error) => eprintln!("no tray icon: {error}"),
             }
             app.manage(state);
+            app.manage(ssh::SshState::default());
             tauri::async_runtime::spawn(monitor::run(app.handle().clone()));
             Ok(())
         })
@@ -69,6 +71,16 @@ fn main() {
             setup::probe,
             setup::begin_setup,
             setup::complete_setup,
+            commands::ssh_service,
+            commands::enable_ssh,
+            ssh::ssh_link,
+            ssh::ssh_unlink,
+            ssh::diagnostics,
+            ssh::memory_modules,
+            ssh::terminal_open,
+            ssh::terminal_write,
+            ssh::terminal_resize,
+            ssh::terminal_close,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Syno Companion");

@@ -34,10 +34,10 @@ Each version is usable on its own. Features that change the NAS beyond DSM's own
 
 ## v0.3 – SSH
 
-- [ ] SSH assistant: enable SSH through DSM (after asking), create an ed25519 key or use an existing one, install it with the permissions DSM expects (home 755, `.ssh` 700, `authorized_keys` 600), pin the host key
-- [ ] `sudo` through the keychain, never on a command line
-- [ ] Built-in terminal for users who want one
-- [ ] Diagnostics: DSM build, kernel version, kernel features (`io_uring` and others from `/proc/config.gz` or `/proc/kallsyms`), memory modules with type and speed (`dmidecode`; the DSM Web API reports only the total), network chips and drivers (`ethtool -i`)
+- [x] SSH assistant: enable SSH through DSM (after asking), create an ed25519 key for this computer, install it with the permissions sshd expects (`.ssh` 700, `authorized_keys` 600, home not writable by others), pin the host key. The app uses a key of its own rather than an existing one, so it can be removed without touching your other keys.
+- [x] `sudo` with the password from the keychain (or typed once), sent on standard input, never on a command line
+- [x] Built-in terminal (expert mode)
+- [x] Diagnostics: DSM build, kernel version, `io_uring` (from `/proc/kallsyms` and `kernel.io_uring_disabled`), memory modules with type and speed (`dmidecode`; the DSM Web API reports only the total), network drivers and link speed (sysfs)
 
 ## v0.4 – Extend (expert mode)
 

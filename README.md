@@ -13,7 +13,7 @@
 
 It is made for **regular users without shell experience**. Everything that touches the system beyond what DSM offers sits behind an **expert mode**, shows the exact commands before it runs them, makes a backup first and can be undone.
 
-> **Status: pre-alpha, version 0.2.** Finding NAS, first-time setup, signing in (with 2FA and certificate check), the dashboard with updates, restart and shutdown, shared folders, Wake-on-LAN, tray notifications and several NAS side by side work; the basics are tested against a Virtual DSM 7.4.1. Downloads: [releases](https://github.com/SoulInfernoDE/synology-companion-app/releases). See the [roadmap](ROADMAP.md).
+> **Status: pre-alpha, version 0.3.** Finding NAS, first-time setup, signing in (with 2FA and certificate check), the dashboard with updates, restart and shutdown, shared folders, Wake-on-LAN, tray notifications, several NAS side by side and SSH with a key (diagnostics, terminal) work; the basics are tested against a Virtual DSM 7.4.1. Downloads: [releases](https://github.com/SoulInfernoDE/synology-companion-app/releases). See the [roadmap](ROADMAP.md).
 >
 > Syno Companion is an independent community project. It is not affiliated with, endorsed by or supported by Synology Inc. "Synology" and "DSM" are trademarks of Synology Inc.
 
@@ -28,7 +28,7 @@ It is made for **regular users without shell experience**. Everything that touch
 - **Control:** Wake-on-LAN, restart, shut down, silence the beeper.
 - **Shared folders with one click:** mounted in the file manager (Nemo/Nautilus/Dolphin, Finder, Explorer).
 - **Download Station:** hand over links, torrent files and `magnet:` links.
-- **SSH made easy:** the app enables SSH on request, creates a key (or uses yours), installs it on the NAS with the permissions DSM expects and pins the host key. Afterwards it works on the NAS without asking for a password; `sudo` passwords stay in the keychain and are never passed on a command line.
+- **SSH made easy:** the app enables SSH on request, creates a key of its own for this computer, installs it on the NAS with the permissions sshd expects and pins the host key. Afterwards it works on the NAS without asking for a password; `sudo` passwords stay in the keychain and are never passed on a command line. Diagnostics show what DSM hides (kernel, `io_uring`, memory modules, network drivers), and expert mode adds a terminal.
 - **Package sources:** add community sources such as [SynoCommunity](https://synocommunity.com) and browse their packages.
 
 **Expert mode**

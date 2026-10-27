@@ -26,6 +26,17 @@ pub struct KnownDevice {
     /// MAC address seen by discovery, for Wake-on-LAN.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub mac: Option<String>,
+    /// SSH with a key of this app; the key itself is in the keychain.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ssh: Option<SshLink>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SshLink {
+    pub port: u16,
+    /// SHA-256 fingerprint of the host key the user trusted.
+    pub host_key: String,
 }
 
 pub fn device_id(host: &str, port: u16) -> String {
@@ -77,6 +88,15 @@ impl DeviceStore {
         if changed { self.save() } else { Ok(()) }
     }
 
+    /// Replaces the SSH link of a saved device.
+    pub fn set_ssh(&mut self, id: &str, ssh: Option<SshLink>) -> io::Result<()> {
+        if let Some(device) = self.devices.iter_mut().find(|device| device.id == id) {
+            device.ssh = ssh;
+            self.save()?;
+        }
+        Ok(())
+    }
+
     pub fn remove(&mut self, id: &str) -> io::Result<Option<KnownDevice>> {
         let index = self.devices.iter().position(|device| device.id == id);
         let removed = index.map(|index| self.devices.remove(index));
@@ -110,6 +130,7 @@ mod tests {
             fingerprint: None,
             remember_login: false,
             mac: None,
+            ssh: None,
         }
     }
 
@@ -139,6 +160,19 @@ mod tests {
         store.remember_mac("10.0.0.9", "00:11:32:00:00:01").unwrap();
         let reloaded = DeviceStore::load(dir.path());
         assert_eq!(reloaded.all()[0].mac.as_deref(), Some("00:11:32:aa:bb:cc"));
+    }
+
+    #[test]
+    fn keeps_the_ssh_link() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut store = DeviceStore::load(dir.path());
+        store.upsert(device("a")).unwrap();
+        let link = SshLink {
+            port: 22,
+            host_key: "SHA256:abc".into(),
+        };
+        store.set_ssh("a:5001", Some(link.clone())).unwrap();
+        assert_eq!(DeviceStore::load(dir.path()).all()[0].ssh, Some(link));
     }
 
     #[test]

@@ -34,7 +34,7 @@
 | `crates/companion-dsm`       | Client für die DSM-Web-API mit Zertifikats-Pinning                    |
 | `crates/companion-discovery` | Findet NAS im lokalen Netz (Bonjour, Synology Assistant)              |
 | `crates/companion-mockdsm`   | `mock-dsm`, ein nachgebauter DSM, um die App ohne NAS auszuprobieren  |
-| `crates/companion-ssh`       | SSH, Schlüssel, sudo _(geplant)_                                      |
+| `crates/companion-ssh`       | SSH, Schlüssel, sudo, Diagnose                                        |
 | `crates/companion-recipes`   | Rezept-Engine und Protokoll _(geplant)_                               |
 | `ui/`                        | Oberfläche (Svelte 5, TypeScript, Vite)                               |
 | `locales/`                   | Fluent-Kataloge, von Rust und UI gemeinsam genutzt (`en` Basis, `de`) |
@@ -75,6 +75,17 @@ Danach meldet sich die App mit dem neuen Konto an und setzt Updates, Zeitzone, N
 - **Ein/Aus:** Neustart und Herunterfahren nutzen `SYNO.Core.System reboot`/`shutdown` ohne `force`, damit DSM ablehnt, solange eine Aufgabe nicht unterbrochen werden darf; den Piepton schaltet `SYNO.Core.Hardware.BeepControl stop_beep` ab.
 - **Wake-on-LAN:** Die Web-API von DSM meldet keine MAC-Adresse, Bonjour und findhostd aber schon. Die App merkt sich die MAC eines gespeicherten NAS aus der Suche und schickt das Magic Packet ans ganze Netz und an das letzte /24-Netz des NAS, auf den Ports 9 und 7.
 - **Freigaben** kommen aus `SYNO.Core.Share list`; versteckte bleiben versteckt. Sie öffnen sich über SMB im Dateimanager des Systems: `smb://`-URLs unter Linux und macOS, `\\host\freigabe` im Explorer unter Windows. Den Ordner `homes` stellt DSM als `home` bereit, den eigenen Home-Ordner.
+
+## SSH
+
+Der SSH-Client ist [russh](https://github.com/Eugeny/russh) (reines Rust, Apache-2.0); ein `ssh`-Programm auf dem Computer ist nicht nötig.
+
+1. **Dienst.** `SYNO.Core.Terminal get` sagt, ob SSH an ist und auf welchem Port; nach Zustimmung schaltet `set` es ein. Die Anmeldung mit Schlüssel braucht den Benutzer-Home-Dienst von DSM (`SYNO.Core.User.Home`), weil `authorized_keys` im Home-Ordner liegt; der Assistent warnt, wenn er aus ist. Nur Administratoren dürfen auf DSM SSH nutzen.
+2. **Host-Schlüssel.** Wie beim HTTPS-Zertifikat: Die erste Verbindung zeigt den SHA-256-Fingerabdruck, der Benutzer vertraut ihm, und er wird in `devices.json` festgehalten. Ein anderer Schlüssel wird später mit Warnung abgelehnt.
+3. **Schlüssel.** Die App erzeugt pro NAS und Konto einen eigenen ed25519-Schlüssel und meldet sich einmal mit dem DSM-Passwort an (Passwort oder keyboard-interactive), um den öffentlichen Schlüssel an `~/.ssh/authorized_keys` anzuhängen. Dabei bekommt `.ssh` die Rechte 700, die Datei 600, und der Home-Ordner verliert das Schreibrecht für andere, wie sshds `StrictModes` es verlangt. Danach meldet sie sich zur Probe mit dem Schlüssel an und legt erst dann den privaten Schlüssel im Schlüsselbund ab (Eintrag `ssh:konto@nas`). _Schlüssel entfernen_ löscht die Zeile auf dem NAS und den Eintrag im Schlüsselbund.
+4. **sudo.** Befehle, die root brauchen, laufen als `sudo -S -p '' -- sh -c '…'`; das Passwort geht über die Standardeingabe und taucht so nie in einer Prozessliste oder Shell-History auf. Es kommt aus dem Schlüsselbund, wenn der Benutzer es die App merken lässt, sonst gibt er es ein.
+5. **Diagnose** in einem Durchgang: `/etc.defaults/VERSION`, `uname`, `io_uring_setup` in `/proc/kallsyms` plus `kernel.io_uring_disabled`, Treiber und Geschwindigkeit jeder Netzwerkschnittstelle aus sysfs und `docker --version`. Speichermodule kommen aus `dmidecode -t 17` und brauchen sudo.
+6. **Terminal** (Expertenmodus): eine PTY-Shell (`xterm-256color`), deren Ausgabe über einen Tauri-Kanal an [xterm.js](https://xtermjs.org/) (MIT) geht; xterm.js wird erst geladen, wenn ein Terminal aufgeht.
 
 ## Tray und Benachrichtigungen
 

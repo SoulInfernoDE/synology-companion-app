@@ -42,6 +42,8 @@ struct World {
     configured: bool,
     /// Accounts created through the first-time setup, with their passwords.
     accounts: HashMap<String, String>,
+    /// DSM's SSH service; the mock only answers the setting, it runs no SSH server.
+    ssh: bool,
 }
 
 fn options() -> Options {
@@ -90,8 +92,10 @@ fn api_list() -> Value {
         "SYNO.Core.Share",
         "SYNO.Core.System",
         "SYNO.Core.System.Utilization",
+        "SYNO.Core.Terminal",
         "SYNO.Core.Upgrade.Server",
         "SYNO.Core.User",
+        "SYNO.Core.User.Home",
         "SYNO.Core.User.PasswordPolicy",
         "SYNO.Core.User.UsernamePolicy",
         "SYNO.Entry.Request",
@@ -249,6 +253,14 @@ fn answer(
             { "name": "media", "desc": "Photos, music and videos", "hidden": false, "encryption": 0 }
         ] })),
         ("SYNO.Core.FileServ.SMB", "get") => success(json!({ "enable_samba": true })),
+        ("SYNO.Core.Terminal", "get") => {
+            success(json!({ "enable_ssh": world.ssh, "enable_telnet": false, "ssh_port": 22 }))
+        }
+        ("SYNO.Core.Terminal", "set") => {
+            world.ssh = param("enable_ssh") == "true";
+            success(json!({}))
+        }
+        ("SYNO.Core.User.Home", "get") => success(json!({ "enable": true })),
         ("SYNO.Core.System", "reboot" | "shutdown")
         | ("SYNO.Core.Hardware.BeepControl", "stop_beep") => success(json!({})),
         _ => failure(103),
@@ -364,6 +376,7 @@ fn main() {
     let world = Arc::new(Mutex::new(World {
         configured: !options.unconfigured,
         accounts: HashMap::new(),
+        ssh: false,
     }));
     let options = Arc::new(options);
     for stream in listener.incoming().flatten() {
@@ -387,6 +400,7 @@ mod tests {
         World {
             configured,
             accounts: HashMap::new(),
+            ssh: false,
         }
     }
 

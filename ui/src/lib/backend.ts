@@ -1,7 +1,7 @@
 // Calls into the Rust core. In a plain browser (`npm run dev`) there is no core;
 // the interface then offers only the sample data.
 
-import { invoke } from '@tauri-apps/api/core';
+import { Channel, invoke } from '@tauri-apps/api/core';
 import type { Overview } from './nas';
 
 /** True inside the app; false in the plain browser preview. */
@@ -27,6 +27,14 @@ export interface KnownDevice {
   fingerprint?: string;
   rememberLogin: boolean;
   mac?: string;
+  /** SSH with a key of this app. */
+  ssh?: SshLink;
+}
+
+export interface SshLink {
+  port: number;
+  /** SHA-256 fingerprint of the trusted host key. */
+  hostKey: string;
 }
 
 /** An error from the core: `key` selects the message `error-<key>`. */
@@ -219,3 +227,75 @@ export function parseAddress(input: string): { host: string; port: number } | nu
   if (!text || !Number.isInteger(port) || port < 1 || port > 65535) return null;
   return { host: text, port };
 }
+
+export interface SshService {
+  enabled: boolean;
+  port: number;
+  /** The user home service, which key sign-in needs. */
+  homes: boolean;
+}
+
+export interface LinkRequest {
+  port: number;
+  password?: string;
+  trustFingerprint?: string;
+}
+
+export type LinkOutcome =
+  | { status: 'linked'; device: KnownDevice }
+  | { status: 'passwordRequired' }
+  | { status: 'untrustedHostKey'; fingerprint: string }
+  | { status: 'hostKeyChanged'; fingerprint: string }
+  | ({ status: 'failed' } & Failure);
+
+export interface NetworkDriver {
+  interface: string;
+  driver: string;
+  speed: number | null;
+}
+
+export interface Diagnostics {
+  dsmVersion: string | null;
+  dsmBuild: string | null;
+  dsmUpdate: number | null;
+  kernel: string;
+  machine: string;
+  ioUring: 'available' | 'disabled' | 'missing';
+  network: NetworkDriver[];
+  docker: string | null;
+}
+
+export interface MemoryModule {
+  slot: string;
+  sizeMb: number | null;
+  kind: string | null;
+  speed: number | null;
+  manufacturer: string | null;
+  partNumber: string | null;
+}
+
+export type TerminalEvent = { event: 'output'; data: number[] } | { event: 'closed' };
+
+export const sshService = () => invoke<SshService>('ssh_service');
+export const enableSsh = (port: number) => invoke<void>('enable_ssh', { port });
+export const sshLink = (request: LinkRequest) => invoke<LinkOutcome>('ssh_link', { request });
+export const sshUnlink = () => invoke<void>('ssh_unlink');
+export const diagnostics = () => invoke<Diagnostics>('diagnostics');
+export const memoryModules = (password?: string) =>
+  invoke<MemoryModule[]>('memory_modules', { password });
+
+/** Opens a shell on the current NAS; returns its id. */
+export function terminalOpen(
+  cols: number,
+  rows: number,
+  onevent: (event: TerminalEvent) => void,
+): Promise<number> {
+  const events = new Channel<TerminalEvent>();
+  events.onmessage = onevent;
+  return invoke<number>('terminal_open', { cols, rows, events });
+}
+export const terminalWrite = (id: number, data: string) =>
+  invoke<void>('terminal_write', { id, data });
+export const terminalResize = (id: number, cols: number, rows: number) =>
+  invoke<void>('terminal_resize', { id, cols, rows });
+export const terminalClose = (id: number) => invoke<void>('terminal_close', { id });

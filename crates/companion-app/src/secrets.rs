@@ -55,5 +55,38 @@ pub fn store(device_id: &str, account: &str, login: &StoredLogin) -> Result<(), 
 }
 
 pub fn forget(device_id: &str, account: &str) -> Result<(), String> {
-    store(device_id, account, &StoredLogin::default())
+    store(device_id, account, &StoredLogin::default())?;
+    store_ssh_key(device_id, account, None)
+}
+
+fn ssh_entry(device_id: &str, account: &str) -> Result<keyring::Entry, keyring::Error> {
+    keyring::Entry::new(SERVICE, &format!("ssh:{account}@{device_id}"))
+}
+
+/// The private SSH key (OpenSSH format) this app made for the NAS and account.
+pub fn load_ssh_key(device_id: &str, account: &str) -> Option<String> {
+    ssh_entry(device_id, account)
+        .and_then(|entry| entry.get_password())
+        .ok()
+}
+
+/// Stores the private SSH key, or removes it with `None`.
+pub fn store_ssh_key(device_id: &str, account: &str, key: Option<&str>) -> Result<(), String> {
+    let entry = ssh_entry(device_id, account).map_err(|error| error.to_string())?;
+    let Some(key) = key else {
+        return match entry.delete_credential() {
+            Ok(()) | Err(keyring::Error::NoEntry) => Ok(()),
+            Err(error) => Err(error.to_string()),
+        };
+    };
+    entry.set_password(key).map_err(|error| error.to_string())?;
+    #[cfg(target_os = "linux")]
+    {
+        let label = format!("{SERVICE} – SSH {account}@{device_id}");
+        let _ = entry.update_attributes(&std::collections::HashMap::from([(
+            "label",
+            label.as_str(),
+        )]));
+    }
+    Ok(())
 }

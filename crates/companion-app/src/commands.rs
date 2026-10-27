@@ -5,12 +5,14 @@ use std::sync::{Mutex, MutexGuard, RwLock, RwLockReadGuard};
 use std::time::Duration;
 
 use companion_discovery::FoundNas;
-use companion_dsm::{AuthError, Client, Credentials, Error, Overview, Session, Shares, Updates};
+use companion_dsm::{
+    AuthError, Client, Credentials, Error, Overview, Session, Shares, SshService, Updates,
+};
 use serde::{Deserialize, Serialize};
 use tauri::State;
 use tauri::async_runtime::{Mutex as AsyncMutex, spawn_blocking};
 
-use crate::devices::{DeviceStore, KnownDevice, device_id};
+use crate::devices::{DeviceStore, KnownDevice, SshLink, device_id};
 use crate::i18n::Texts;
 use crate::preferences::{self, Preferences};
 use crate::secrets::{self, StoredLogin};
@@ -126,6 +128,34 @@ impl AppState {
         self.texts
             .read()
             .unwrap_or_else(|poisoned| poisoned.into_inner())
+    }
+
+    /// The NAS the interface shows.
+    pub(crate) async fn current_device(&self) -> Result<KnownDevice, Failure> {
+        self.active
+            .lock()
+            .await
+            .current()
+            .map(|current| current.device.clone())
+            .ok_or_else(|| Failure::new("not-connected", None))
+    }
+
+    /// Saves the SSH link of a device, in the list and in its session.
+    pub(crate) async fn set_ssh(&self, id: &str, link: Option<SshLink>) -> Result<(), Failure> {
+        self.store
+            .lock()
+            .map_err(|_| Failure::new("storage", None))?
+            .set_ssh(id, link.clone())
+            .map_err(|error| Failure::new("storage", error.to_string()))?;
+        let mut active = self.active.lock().await;
+        if let Some(session) = active
+            .all
+            .iter_mut()
+            .find(|session| session.device.id == id)
+        {
+            session.device.ssh = link;
+        }
+        Ok(())
     }
 
     pub async fn targets(&self) -> Vec<Target> {
@@ -347,6 +377,7 @@ pub async fn connect(
         mac: request
             .mac
             .or_else(|| known.as_ref().and_then(|device| device.mac.clone())),
+        ssh: known.as_ref().and_then(|device| device.ssh.clone()),
     };
     let remember_login = request.remember_login;
     let device = activate(&state, client, session, device, password, remember_login).await?;
@@ -479,6 +510,16 @@ pub async fn stop_beep(state: State<'_, AppState>) -> Result<(), Failure> {
     on_nas!(state, |client, session| client.stop_beep(session))
 }
 
+#[tauri::command]
+pub async fn ssh_service(state: State<'_, AppState>) -> Result<SshService, Failure> {
+    on_nas!(state, |client, session| client.ssh_service(session))
+}
+
+#[tauri::command]
+pub async fn enable_ssh(port: u16, state: State<'_, AppState>) -> Result<(), Failure> {
+    on_nas!(state, |client, session| client.enable_ssh(session, port))
+}
+
 #[derive(Debug, Clone, Copy, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum Power {
@@ -551,9 +592,13 @@ pub fn wake(id: String, state: State<'_, AppState>) -> Result<(), Failure> {
 
 /// Signs out of the current NAS; another signed-in NAS becomes current.
 #[tauri::command]
-pub async fn disconnect(state: State<'_, AppState>) -> Result<Connected, Failure> {
+pub async fn disconnect(
+    state: State<'_, AppState>,
+    ssh: State<'_, crate::ssh::SshState>,
+) -> Result<Connected, Failure> {
     let mut active = state.active.lock().await;
     if let Some(removed) = active.remove_current() {
+        ssh.drop_device(&removed.device.id).await;
         removed.client.logout(&removed.session).await;
     }
     Ok(active.connected())

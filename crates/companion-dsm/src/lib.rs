@@ -17,7 +17,7 @@ use serde::Deserialize;
 use serde_json::Value;
 use url::Url;
 
-pub use manage::{DsmUpdate, PackageUpdate, Share, Shares, Updates};
+pub use manage::{DsmUpdate, PackageUpdate, Share, Shares, SshService, Updates};
 pub use overview::{Drive, DriveKind, Health, NetworkPort, Overview, Volume};
 pub use setup::{
     PasswordRules, SetupDone, SetupInfo, SetupRequest, SetupState, TimeZone, UpdatePolicy,
@@ -39,7 +39,9 @@ const APIS: &[&str] = &[
     "SYNO.Core.Share",
     "SYNO.Core.System",
     "SYNO.Core.System.Utilization",
+    "SYNO.Core.Terminal",
     "SYNO.Core.Upgrade.Server",
+    "SYNO.Core.User.Home",
     "SYNO.Storage.CGI.Storage",
 ];
 

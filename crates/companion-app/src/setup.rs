@@ -159,6 +159,7 @@ pub async fn complete_setup(
         fingerprint: pending.fingerprint,
         remember_login: request.remember_login,
         mac: request.mac,
+        ssh: None,
     };
     let Some(session) = done.session else {
         if let Ok(mut store) = state.store.lock() {

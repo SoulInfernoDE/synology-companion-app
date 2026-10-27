@@ -4,17 +4,21 @@
 // asks for a two-step code (any 6 digits). "vdsm-test" is not set up yet and
 // shows the first-time setup.
 
+import type { Channel } from '@tauri-apps/api/core';
 import type {
   CompleteSetupRequest,
   ConnectOutcome,
   ConnectRequest,
   FoundNas,
   KnownDevice,
+  LinkOutcome,
+  LinkRequest,
   ProbeOutcome,
   ProbeRequest,
   SetupInfo,
+  TerminalEvent,
 } from './backend';
-import { demoOverview, demoShares, demoUpdates } from './nas';
+import { demoDiagnostics, demoMemory, demoOverview, demoShares, demoUpdates } from './nas';
 
 const FINGERPRINT = Array.from({ length: 32 }, (_, i) =>
   ((i * 37 + 11) % 256).toString(16).padStart(2, '0'),
@@ -140,6 +144,26 @@ async function completeSetup(request: CompleteSetupRequest) {
   return { device, skipped: [], signedIn: true };
 }
 
+let sshEnabled = false;
+let terminalOutput: ((text: string) => void) | null = null;
+const HOST_KEY = 'SHA256:mOcKhOsTkEyFoRtHePrEvIeWoNlY0123456789abcd';
+
+/** SSH: first the host key question, then the password unless it is remembered. */
+async function sshLink(request: LinkRequest): Promise<LinkOutcome> {
+  await wait(700);
+  if (!sshEnabled) return { status: 'failed', key: 'ssh-network' };
+  if (request.trustFingerprint !== HOST_KEY) {
+    return { status: 'untrustedHostKey', fingerprint: HOST_KEY };
+  }
+  const device = saved.find((known) => known.id === current);
+  if (!device) throw { key: 'not-connected' };
+  const password = request.password ?? (device.rememberLogin ? 'demo' : undefined);
+  if (password === undefined) return { status: 'passwordRequired' };
+  if (password !== 'demo') return { status: 'failed', key: 'ssh-auth' };
+  device.ssh = { port: request.port, hostKey: HOST_KEY };
+  return { status: 'linked', device };
+}
+
 const commands: Record<string, (args: Record<string, unknown>) => Promise<unknown>> = {
   probe: (args) => probe(args.request as ProbeRequest),
   begin_setup: async () => (await wait(600), setupInfo),
@@ -174,12 +198,47 @@ const commands: Record<string, (args: Record<string, unknown>) => Promise<unknow
     current = args.id as string;
     return snapshot();
   },
+  ssh_service: async () => ({ enabled: sshEnabled, port: 22, homes: true }),
+  enable_ssh: async () => {
+    sshEnabled = true;
+  },
+  ssh_link: (args) => sshLink(args.request as LinkRequest),
+  ssh_unlink: async () => {
+    const device = saved.find((known) => known.id === current);
+    if (device) delete device.ssh;
+  },
+  diagnostics: async () => (await wait(500), demoDiagnostics),
+  memory_modules: async (args) => {
+    await wait(500);
+    if (args.password === undefined) throw { key: 'password-required' };
+    if (args.password !== 'demo') throw { key: 'sudo' };
+    return demoMemory;
+  },
+  terminal_open: async (args) => {
+    const events = args.events as Channel<TerminalEvent>;
+    const say = (text: string) =>
+      events.onmessage({ event: 'output', data: Array.from(new TextEncoder().encode(text)) });
+    terminalOutput = say;
+    say('Mock shell: everything you type is echoed.\r\n$ ');
+    return 1;
+  },
+  terminal_write: async (args) => {
+    const data = args.data as string;
+    terminalOutput?.(data === '\r' ? '\r\n$ ' : data);
+  },
+  terminal_resize: async () => undefined,
+  terminal_close: async () => {
+    terminalOutput = null;
+  },
   forget_device: async (args) => {
     saved = saved.filter((device) => device.id !== args.id);
   },
 };
 
+let callbacks = 0;
 (window as unknown as { __TAURI_INTERNALS__: unknown }).__TAURI_INTERNALS__ = {
+  // Channels register a callback for the core; the mock calls `onmessage` directly.
+  transformCallback: () => ++callbacks,
   invoke: (command: string, args: Record<string, unknown> = {}) => {
     const handler = commands[command];
     return handler ? handler(args) : Promise.reject({ key: 'unexpected', detail: command });

@@ -31,7 +31,7 @@ export const sections: readonly Section[] = [
     planned: '0.4',
     description: 'planned-packages',
   },
-  { id: 'ssh', label: 'nav-ssh', icon: SquareTerminal, planned: '0.3', description: 'planned-ssh' },
+  { id: 'ssh', label: 'nav-ssh', icon: SquareTerminal },
   {
     id: 'extensions',
     label: 'nav-extensions',

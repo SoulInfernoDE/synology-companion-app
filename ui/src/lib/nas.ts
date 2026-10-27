@@ -1,7 +1,7 @@
 // What the interface knows about a NAS. The Rust core fills these from the DSM Web API;
 // in demo mode they come from `demoOverview`.
 
-import type { Shares, Updates } from './backend';
+import type { Diagnostics, MemoryModule, Shares, Updates } from './backend';
 
 export type Health = 'normal' | 'warning' | 'critical';
 
@@ -186,3 +186,36 @@ export const demoShares: Shares = {
     { name: 'backup', description: '', smbName: 'backup', encrypted: true },
   ],
 };
+
+export const demoDiagnostics: Diagnostics = {
+  dsmVersion: '7.4.1',
+  dsmBuild: '86000',
+  dsmUpdate: 1,
+  kernel: '5.10.55+',
+  machine: 'x86_64',
+  ioUring: 'available',
+  network: [
+    { interface: 'eth0', driver: 'r8169', speed: 1000 },
+    { interface: 'eth1', driver: 'r8169', speed: null },
+  ],
+  docker: 'Docker version 24.0.2, build 610b8d0',
+};
+
+export const demoMemory: MemoryModule[] = [
+  {
+    slot: 'ChannelA-DIMM0',
+    sizeMb: 4096,
+    kind: 'DDR4',
+    speed: 2666,
+    manufacturer: 'Samsung',
+    partNumber: 'M471A5244CB0-CWE',
+  },
+  {
+    slot: 'ChannelB-DIMM0',
+    sizeMb: 16384,
+    kind: 'DDR4',
+    speed: 2666,
+    manufacturer: 'Crucial',
+    partNumber: 'CT16G4SFRA266',
+  },
+];

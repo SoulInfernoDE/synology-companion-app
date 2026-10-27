@@ -34,7 +34,7 @@
 | `crates/companion-dsm`       | DSM Web API client with certificate pinning                  |
 | `crates/companion-discovery` | Finds NAS on the local network (Bonjour, Synology Assistant) |
 | `crates/companion-mockdsm`   | `mock-dsm`, a stand-in DSM to try the app without a NAS      |
-| `crates/companion-ssh`       | SSH, keys, sudo _(planned)_                                  |
+| `crates/companion-ssh`       | SSH, keys, sudo, diagnostics                                 |
 | `crates/companion-recipes`   | Recipe engine and journal _(planned)_                        |
 | `ui/`                        | User interface (Svelte 5, TypeScript, Vite)                  |
 | `locales/`                   | Fluent catalogs, shared by Rust and UI (`en` base, `de`)     |
@@ -75,6 +75,17 @@ Afterwards the app signs in with the new account and sets updates, time zone, us
 - **Power:** restart and shut down use `SYNO.Core.System reboot`/`shutdown` without `force`, so DSM refuses while a task must not be interrupted; the beeper is silenced with `SYNO.Core.Hardware.BeepControl stop_beep`.
 - **Wake-on-LAN:** DSM's Web API reports no MAC address, but Bonjour and findhostd do. The app keeps the MAC of a saved NAS from discovery and sends the magic packet to the whole network and to the NAS's last /24 network, on ports 9 and 7.
 - **Shared folders** come from `SYNO.Core.Share list`; hidden ones stay hidden. They open over SMB in the system's file manager: `smb://` URLs on Linux and macOS, `\\host\share` in Explorer on Windows. DSM serves the folder `homes` as `home`, the user's own home folder.
+
+## SSH
+
+The SSH client is [russh](https://github.com/Eugeny/russh) (pure Rust, Apache-2.0), so no `ssh` program is needed on the computer.
+
+1. **Service.** `SYNO.Core.Terminal get` tells whether SSH is on and on which port; after the user agrees, `set` turns it on. Key sign-in needs DSM's user home service (`SYNO.Core.User.Home`), because `authorized_keys` lives in the home folder; the assistant warns when it is off. Only administrators may use SSH on DSM.
+2. **Host key.** Like the HTTPS certificate: the first connection shows the SHA-256 fingerprint, the user trusts it, and it is pinned in `devices.json`. A different key later is refused with a warning.
+3. **Key.** The app makes an ed25519 key of its own for each NAS and account and signs in once with the DSM password (password or keyboard-interactive) to append the public key to `~/.ssh/authorized_keys`, setting `.ssh` to 700, the file to 600 and removing write access for others from the home folder, as sshd's `StrictModes` requires. It then signs in with the key to check it works, and only then stores the private key in the keychain (entry `ssh:account@nas`). _Remove key_ deletes the line on the NAS and the keychain entry.
+4. **sudo.** Commands that need root run as `sudo -S -p '' -- sh -c '…'`; the password goes to standard input, so it never appears in a process list or shell history. It comes from the keychain if the user let the app remember it, otherwise the user types it.
+5. **Diagnostics** collect in one round trip: `/etc.defaults/VERSION`, `uname`, `io_uring_setup` in `/proc/kallsyms` plus `kernel.io_uring_disabled`, the driver and speed of each network interface from sysfs, and `docker --version`. Memory modules come from `dmidecode -t 17` and need sudo.
+6. **Terminal** (expert mode): a PTY shell (`xterm-256color`) whose output streams to [xterm.js](https://xtermjs.org/) (MIT) through a Tauri channel; xterm.js loads only when a terminal opens.
 
 ## Tray and notifications
 

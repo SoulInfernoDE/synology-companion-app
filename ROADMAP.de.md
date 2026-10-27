@@ -34,10 +34,10 @@ Jede Version ist für sich nutzbar. Funktionen, die das NAS über DSMs eigene Ei
 
 ## v0.3 – SSH
 
-- [ ] SSH-Assistent: SSH über DSM einschalten (nach Rückfrage), ed25519-Schlüssel erzeugen oder vorhandenen nehmen, mit den Rechten hinterlegen, die DSM erwartet (Home 755, `.ssh` 700, `authorized_keys` 600), Host-Schlüssel merken
-- [ ] `sudo` über den Schlüsselbund, nie in einer Befehlszeile
-- [ ] Eingebautes Terminal für alle, die eins möchten
-- [ ] Diagnose: DSM-Build, Kernel-Version, Kernel-Funktionen (`io_uring` und andere aus `/proc/config.gz` oder `/proc/kallsyms`), Speichermodule mit Typ und Takt (`dmidecode`; die DSM-Web-API meldet nur die Gesamtgröße), Netzwerkchips und Treiber (`ethtool -i`)
+- [x] SSH-Assistent: SSH über DSM einschalten (nach Rückfrage), ed25519-Schlüssel für diesen Computer erzeugen, mit den Rechten hinterlegen, die sshd erwartet (`.ssh` 700, `authorized_keys` 600, Home nicht für andere beschreibbar), Host-Schlüssel merken. Die App nutzt einen eigenen Schlüssel statt eines vorhandenen, damit er sich entfernen lässt, ohne deine anderen Schlüssel anzufassen.
+- [x] `sudo` mit dem Passwort aus dem Schlüsselbund (oder einmal eingegeben), über die Standardeingabe, nie in einer Befehlszeile
+- [x] Eingebautes Terminal (Expertenmodus)
+- [x] Diagnose: DSM-Build, Kernel-Version, `io_uring` (aus `/proc/kallsyms` und `kernel.io_uring_disabled`), Speichermodule mit Typ und Takt (`dmidecode`; die DSM-Web-API meldet nur die Gesamtgröße), Netzwerktreiber und Verbindungsgeschwindigkeit (sysfs)
 
 ## v0.4 – Erweitern (Expertenmodus)
 

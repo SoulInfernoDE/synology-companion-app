@@ -151,6 +151,16 @@ fn shares(list: &Value, smb: Option<&Value>) -> Shares {
     }
 }
 
+/// DSM's SSH service and what key sign-in needs from it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SshService {
+    pub enabled: bool,
+    pub port: u16,
+    /// Key sign-in needs the user home service: `authorized_keys` lives in the home folder.
+    pub homes: bool,
+}
+
 impl Client {
     /// Available DSM and package updates. Each part is asked on its own; one that
     /// fails is `None`.
@@ -230,6 +240,41 @@ impl Client {
     }
 
     /// The shared folders this account sees, and whether SMB is on to open them.
+    pub async fn ssh_service(&self, session: &Session) -> Result<SshService, Error> {
+        let terminal = self
+            .call(session, "SYNO.Core.Terminal", "get", 3, &[])
+            .await?;
+        // Accounts without the right to read it are no reason to fail.
+        let homes = self
+            .call(session, "SYNO.Core.User.Home", "get", 1, &[])
+            .await
+            .ok()
+            .and_then(|home| home["enable"].as_bool())
+            .unwrap_or(true);
+        Ok(SshService {
+            enabled: terminal["enable_ssh"].as_bool().unwrap_or(false),
+            port: terminal["ssh_port"]
+                .as_u64()
+                .and_then(|port| u16::try_from(port).ok())
+                .unwrap_or(22),
+            homes,
+        })
+    }
+
+    /// Turns on DSM's SSH service on `port`; Telnet stays as it is.
+    pub async fn enable_ssh(&self, session: &Session, port: u16) -> Result<(), Error> {
+        let port = port.to_string();
+        self.call(
+            session,
+            "SYNO.Core.Terminal",
+            "set",
+            3,
+            &[("enable_ssh", "true"), ("ssh_port", &port)],
+        )
+        .await
+        .map(drop)
+    }
+
     pub async fn shares(&self, session: &Session) -> Result<Shares, Error> {
         let list = self
             .call(

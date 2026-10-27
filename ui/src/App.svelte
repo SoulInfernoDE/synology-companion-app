@@ -5,6 +5,7 @@
   import Settings from './components/Settings.svelte';
   import Shares from './components/Shares.svelte';
   import Sidebar from './components/Sidebar.svelte';
+  import Ssh from './components/Ssh.svelte';
   import Welcome from './components/Welcome.svelte';
   import { t } from './lib/i18n.svelte';
   import {
@@ -108,6 +109,12 @@
           {/if}
         {:else if section === 'files'}
           <Shares {demo} />
+        {:else if section === 'ssh'}
+          <Ssh
+            {demo}
+            device={demo ? null : (sessions.devices.find((d) => d.id === sessions.current) ?? null)}
+            onchange={async () => (sessions = await connected())}
+          />
         {:else if planned}
           <Planned section={planned} />
         {/if}
