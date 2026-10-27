@@ -2,6 +2,7 @@
   import Containers from './components/Containers.svelte';
   import Extensions from './components/Extensions.svelte';
   import LiveOverview from './components/LiveOverview.svelte';
+  import Nextcloud from './components/Nextcloud.svelte';
   import Overview from './components/Overview.svelte';
   import Packages from './components/Packages.svelte';
   import Planned from './components/Planned.svelte';
@@ -126,6 +127,12 @@
           />
         {:else if section === 'extensions'}
           <Extensions
+            {demo}
+            device={demo ? null : (sessions.devices.find((d) => d.id === sessions.current) ?? null)}
+            onssh={() => (section = 'ssh')}
+          />
+        {:else if section === 'nextcloud'}
+          <Nextcloud
             {demo}
             device={demo ? null : (sessions.devices.find((d) => d.id === sessions.current) ?? null)}
             onssh={() => (section = 'ssh')}

@@ -30,11 +30,5 @@ export const sections: readonly Section[] = [
   { id: 'containers', label: 'nav-containers', icon: ContainerIcon },
   { id: 'ssh', label: 'nav-ssh', icon: SquareTerminal },
   { id: 'extensions', label: 'nav-extensions', icon: Puzzle, expert: true },
-  {
-    id: 'nextcloud',
-    label: 'nav-nextcloud',
-    icon: Cloud,
-    planned: '1.0',
-    description: 'planned-nextcloud',
-  },
+  { id: 'nextcloud', label: 'nav-nextcloud', icon: Cloud },
 ];

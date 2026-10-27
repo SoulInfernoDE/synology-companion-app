@@ -7,6 +7,7 @@ import type {
   JournalEntry,
   Memory,
   MemoryModule,
+  NextcloudEnvironment,
   Package,
   RecipeState,
   Shares,
@@ -358,4 +359,23 @@ export const demoContainers: Container[] = [
 export const demoMemoryReport: Memory = {
   modules: demoMemory,
   tests: [{ time: '2026-03-14T10:12:40+01:00', passed: true, error: null }],
+};
+
+export const demoNextcloud: NextcloudEnvironment = {
+  installs: [
+    {
+      path: '/volume1/web/nextcloud',
+      owner: 'http',
+      php: '/usr/local/bin/php82',
+      phpVersion: '8.2.20',
+      version: '31.0.9',
+      maintenance: false,
+      needsDbUpgrade: false,
+      database: 'mysql',
+      redis: true,
+    },
+  ],
+  php: ['7.4.33', '8.1.29', '8.2.20'],
+  mariadb: '10.11.6',
+  redis: '7.2.5',
 };

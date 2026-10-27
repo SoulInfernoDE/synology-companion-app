@@ -90,7 +90,6 @@ drive-nvme = NVMe-SSD
 ## Geplante Bereiche
 
 planned-version = Geplant für Version { $version }
-planned-nextcloud = Nextcloud in einem geführten Durchlauf aktualisieren: PHP, MariaDB und Redis prüfen, Snapshot anlegen, Updater starten, Rechte wieder schließen.
 
 ## Expertenmodus
 
@@ -451,3 +450,41 @@ extensions-boot-on = an
 extensions-boot-off = aus
 extensions-boot-add = Startaufgabe einrichten
 extensions-boot-remove = Startaufgabe entfernen
+
+## Nextcloud
+
+nextcloud-intro = Nextcloud in Web Station: die Version, ob das nächste Release zu PHP und Datenbank deines NAS passt, und ein geführtes Update, dem du Schritt für Schritt folgen kannst.
+nextcloud-needs-ssh = Nextcloud wird über SSH mit Schlüssel gelesen und aktualisiert.
+nextcloud-password-text = occ und der Updater laufen als Webserver-Benutzer; zu ihm wechselt nur root. Das Passwort geht an sudo auf dem NAS und nirgendwohin sonst.
+nextcloud-maintenance = Wartungsmodus
+nextcloud-needs-upgrade = braucht occ upgrade
+nextcloud-database = Datenbank
+nextcloud-redis-used = für Cache und Sperren genutzt
+nextcloud-redis-unused = nicht eingerichtet
+nextcloud-runs-as = Läuft als
+nextcloud-available = Nextcloud { $version } ist verfügbar.
+nextcloud-current = Nextcloud ist aktuell.
+nextcloud-php-range = Nextcloud { $major } braucht PHP { $min } oder neuer, unter { $below }. Genutzt: { $current }.
+nextcloud-php-switch = PHP { $versions } auf diesem NAS passt: Stelle zuerst das PHP-Profil der Nextcloud-Website in Web Station um.
+nextcloud-php-install = Installiere zuerst PHP { $min } oder neuer im Paket-Zentrum und stelle das PHP-Profil in Web Station um.
+nextcloud-requirements-unknown = Die Anforderungen des nächsten Releases ließen sich nicht lesen; prüfe die Systemanforderungen von Nextcloud.
+nextcloud-check = Auf Update prüfen
+nextcloud-update = Aktualisieren
+nextcloud-confirm = Das Update versetzt Nextcloud in den Wartungsmodus, niemand kann es nutzen, bis es fertig ist. Ein Snapshot der Freigabe web in Snapshot Replication ist vorher eine gute Idee. Diese Schritte laufen nacheinander und halten beim ersten Problem an:
+nextcloud-start = Update starten
+nextcloud-step-backup = Datenbank (mysqldump) und config.php in deinen Home-Ordner sichern
+nextcloud-step-maintenanceOn = Wartungsmodus einschalten
+nextcloud-step-openPermissions = Dem Webserver-Benutzer die Dateien geben, die ihm noch nicht gehören, und ihre Besitzer notieren
+nextcloud-step-update = Den Updater von Nextcloud ausführen (laden, prüfen, ersetzen)
+nextcloud-step-upgrade = occ upgrade
+nextcloud-step-repair = Fehlende Datenbank-Indizes, -Spalten und Primärschlüssel ergänzen
+nextcloud-step-closePermissions = Die Dateien ihren vorherigen Besitzern zurückgeben
+nextcloud-step-maintenanceOff = Wartungsmodus ausschalten
+nextcloud-finished = Nextcloud ist aktualisiert und wieder erreichbar.
+nextcloud-step-failed = Ein Schritt ist nicht durchgelaufen. Lies seine Ausgabe, behebe die Ursache und versuche es erneut; fertige Schritte werden nicht wiederholt.
+nextcloud-retry = Erneut versuchen
+nextcloud-leave = Wartungsmodus verlassen
+nextcloud-none = Unter der Freigabe web wurde kein Nextcloud gefunden.
+nextcloud-nas-php = PHP-Versionen auf diesem NAS: { $versions }
+nextcloud-demo = Beispieldaten: Die Demo aktualisiert nichts.
+error-nextcloud-failed = Nextcloud konnte nicht gelesen werden.

@@ -34,7 +34,8 @@
 | `crates/companion-dsm`       | DSM Web API client with certificate pinning                  |
 | `crates/companion-discovery` | Finds NAS on the local network (Bonjour, Synology Assistant) |
 | `crates/companion-mockdsm`   | `mock-dsm`, a stand-in DSM to try the app without a NAS      |
-| `crates/companion-ssh`       | SSH, keys, sudo, diagnostics                                 |
+| `crates/companion-ssh`       | SSH, keys, sudo, diagnostics, packages, containers           |
+| `crates/companion-nextcloud` | Nextcloud: detection, compatibility, guided update           |
 | `crates/companion-recipes`   | Recipe engine and journal                                    |
 | `ui/`                        | User interface (Svelte 5, TypeScript, Vite)                  |
 | `locales/`                   | Fluent catalogs, shared by Rust and UI (`en` base, `de`)     |
@@ -143,3 +144,11 @@ Rules for every recipe:
 A DSM update replaces system files and so removes recipes such as the drive database. The app notices in two ways: the background monitor reports a changed DSM version, and the _Extensions_ section compares each recipe's `check` with the journal. A recipe whose last successful `apply` was not undone by a `restore` but whose check now fails is shown as _removed by DSM_, with the options of its last run already chosen.
 
 The optional **boot task** does the same without the app. It is a task in DSM's Task Scheduler (`SYNO.Core.EventScheduler`, event `bootup`, owner root), created over SSH as root with `synowebapi`, so DSM asks for no password confirmation. It runs `~/.syno-companion/boot/reapply.sh`, a script the app writes from the journal and that only root can read or change. For every recipe the journal lists as applied, the script runs `check`, and if that fails, checks the recipe script against its SHA-256 and runs `apply` with the last options, then appends a line by "boot task" to the journal. The app writes the script again after every run while the task is set up.
+
+## Nextcloud
+
+The Nextcloud section (crate `companion-nextcloud`) works over SSH as root, because `occ` must run as the owner of `config/config.php`, usually `http`, which only root can switch to.
+
+- **Finding it:** every `occ` up to two folders below `/volume*/web` is tried with each PHP version of Web Station (`/usr/local/bin/php*`, newest first) until `occ status --output=json` answers. That PHP is the one used for every later command. `config.php` is read with that PHP to learn the database type and whether Redis is configured; passwords are never printed.
+- **Compatibility:** `occ update:check` names the next version. Its PHP bounds come from `lib/versioncheck.php` of the matching `stable<major>` branch on GitHub, fetched by the NAS (`PHP_VERSION_ID < 80200` is the minimum, `PHP_VERSION_ID >= 80600` the first version that no longer works). If the PHP in use does not fit, the app names the PHP versions on the NAS that do, so the Web Station profile can be switched first.
+- **Guided update:** eight steps, each a separate command whose output is shown, run in order and stopping at the first failure; finished steps are not repeated. 1. `mysqldump --single-transaction` (password via `MYSQL_PWD`, never on a command line) and a copy of `config.php` into `~/.syno-companion/nextcloud/<time>/`; 2. maintenance mode on; 3. files the web server user does not own are given to it, their previous owners noted in `owners.tsv`; 4. `updater/updater.phar --no-interaction`; 5. `occ upgrade`; 6. `occ db:add-missing-indices`, `…-columns`, `…-primary-keys`; 7. the noted owners are restored; 8. maintenance mode off. After a failure, _Leave maintenance mode_ runs steps 7 and 8 alone.

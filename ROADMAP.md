@@ -58,9 +58,9 @@ Each version is usable on its own. Features that change the NAS beyond DSM's own
 
 ## v1.0 – Nextcloud and stable releases
 
-- [ ] Nextcloud tab: detect the installation (Web Station, PHP profile, database, Redis)
-- [ ] Compatibility check: PHP, MariaDB and Redis versions offered by the NAS against the requirements of the next Nextcloud release
-- [ ] Guided update: snapshot and database dump, maintenance mode, open permissions, updater, `occ upgrade`, `occ db:add-missing-indices`, close permissions, maintenance mode off; every step visible and resumable
+- [x] Nextcloud tab: detect the installation (Web Station, PHP version, database, Redis)
+- [x] Compatibility check: the PHP version against the bounds of the next Nextcloud release (from its `lib/versioncheck.php`); MariaDB and Redis versions are shown
+- [x] Guided update: database dump, maintenance mode, open permissions, updater, `occ upgrade`, `occ db:add-missing-indices`, close permissions, maintenance mode off; every step visible and resumable. The app does not take a snapshot itself; it recommends one in Snapshot Replication first.
 - [ ] Signed packages (Windows, macOS notarisation), Flatpak, AUR
 - [ ] Download Station
 

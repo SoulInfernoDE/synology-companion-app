@@ -24,6 +24,7 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 companion-discovery = { path = "../companion-discovery" }
 companion-dsm = { path = "../companion-dsm" }
+companion-nextcloud = { path = "../companion-nextcloud" }
 companion-recipes = { path = "../companion-recipes" }
 companion-ssh = { path = "../companion-ssh" }
 serde.workspace = true

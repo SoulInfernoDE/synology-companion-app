@@ -433,3 +433,74 @@ export const updateProject = (project: string, dir: string, password?: string) =
 export const bootTask = () => invoke<boolean>('boot_task');
 export const setBootTask = (enable: boolean, password?: string) =>
   invoke<boolean>('set_boot_task', { enable, password });
+
+export interface NextcloudInstall {
+  path: string;
+  owner: string;
+  php: string;
+  phpVersion: string;
+  version: string;
+  maintenance: boolean;
+  needsDbUpgrade: boolean;
+  database: string | null;
+  redis: boolean;
+}
+
+export interface NextcloudEnvironment {
+  installs: NextcloudInstall[];
+  php: string[];
+  mariadb: string | null;
+  redis: string | null;
+}
+
+export interface NextcloudCheck {
+  available: string | null;
+  requirements: { major: number; phpMin: string; phpBelow: string | null } | null;
+}
+
+export type NextcloudStep =
+  | 'backup'
+  | 'maintenanceOn'
+  | 'openPermissions'
+  | 'update'
+  | 'upgrade'
+  | 'repair'
+  | 'closePermissions'
+  | 'maintenanceOff';
+
+export const nextcloudSteps: NextcloudStep[] = [
+  'backup',
+  'maintenanceOn',
+  'openPermissions',
+  'update',
+  'upgrade',
+  'repair',
+  'closePermissions',
+  'maintenanceOff',
+];
+
+export const nextcloud = (password?: string) =>
+  invoke<NextcloudEnvironment>('nextcloud', { password });
+export const nextcloudCheck = (install: NextcloudInstall, password?: string) =>
+  invoke<NextcloudCheck>('nextcloud_check', { install, password });
+export const nextcloudWorkFolder = () => invoke<string>('nextcloud_work_folder');
+export const nextcloudStep = (
+  install: NextcloudInstall,
+  step: NextcloudStep,
+  work: string,
+  password?: string,
+) => invoke<{ ok: boolean; output: string }>('nextcloud_step', { install, step, work, password });
+
+/** Whether PHP `version` is within the bounds of a Nextcloud release. */
+export function phpFits(
+  version: string,
+  requirements: { phpMin: string; phpBelow: string | null },
+): boolean {
+  const parts = (text: string) => text.split('.').slice(0, 2).map(Number);
+  const compare = (a: number[], b: number[]) => (a[0]! - b[0]!) * 100 + (a[1]! - b[1]!);
+  const php = parts(version);
+  return (
+    compare(php, parts(requirements.phpMin)) >= 0 &&
+    (requirements.phpBelow === null || compare(php, parts(requirements.phpBelow)) < 0)
+  );
+}

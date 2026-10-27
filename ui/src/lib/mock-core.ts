@@ -23,6 +23,7 @@ import {
   demoDiagnostics,
   demoJournal,
   demoMemoryReport,
+  demoNextcloud,
   demoOverview,
   demoPackages,
   demoRecipes,
@@ -331,6 +332,20 @@ const commands: Record<string, (args: Record<string, unknown>) => Promise<unknow
       c.project === args.project ? { ...c, update: false } : c,
     );
     return 'Recreated';
+  },
+  nextcloud: async (args) => {
+    await wait(800);
+    if (args.password === undefined) throw { key: 'password-required' };
+    return demoNextcloud;
+  },
+  nextcloud_check: async () => (
+    await wait(900),
+    { available: '32.0.1', requirements: { major: 32, phpMin: '8.1', phpBelow: '8.5' } }
+  ),
+  nextcloud_work_folder: async () => '/var/services/homes/demo/.syno-companion/nextcloud/1',
+  nextcloud_step: async (args) => {
+    await wait(700);
+    return { ok: true, output: `Mock step ${String(args.step)}: done.` };
   },
   forget_device: async (args) => {
     saved = saved.filter((device) => device.id !== args.id);

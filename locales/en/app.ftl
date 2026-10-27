@@ -90,7 +90,6 @@ drive-nvme = NVMe SSD
 ## Planned sections
 
 planned-version = Planned for version { $version }
-planned-nextcloud = Update Nextcloud in one guided run: check PHP, MariaDB and Redis, take a snapshot, run the updater, close the permissions again.
 
 ## Expert mode
 
@@ -451,3 +450,41 @@ extensions-boot-on = on
 extensions-boot-off = off
 extensions-boot-add = Set up boot task
 extensions-boot-remove = Remove boot task
+
+## Nextcloud
+
+nextcloud-intro = Nextcloud installed in Web Station: its version, whether the next release fits the PHP and database of your NAS, and a guided update you can follow step by step.
+nextcloud-needs-ssh = Nextcloud is read and updated over SSH with a key.
+nextcloud-password-text = occ and the updater run as the web server user, which needs root to switch to. The password goes to sudo on the NAS and nowhere else.
+nextcloud-maintenance = maintenance mode
+nextcloud-needs-upgrade = needs occ upgrade
+nextcloud-database = Database
+nextcloud-redis-used = used for caching and locking
+nextcloud-redis-unused = not configured
+nextcloud-runs-as = Runs as
+nextcloud-available = Nextcloud { $version } is available.
+nextcloud-current = Nextcloud is up to date.
+nextcloud-php-range = Nextcloud { $major } needs PHP { $min } or newer, below { $below }. In use: { $current }.
+nextcloud-php-switch = PHP { $versions } on this NAS fits: switch the PHP profile of the Nextcloud website in Web Station first.
+nextcloud-php-install = Install PHP { $min } or newer in Package Center and switch the PHP profile in Web Station first.
+nextcloud-requirements-unknown = The requirements of the next release could not be read; check Nextcloud's system requirements.
+nextcloud-check = Check for update
+nextcloud-update = Update
+nextcloud-confirm = The update puts Nextcloud into maintenance mode, so nobody can use it until it is done. A snapshot of the web share in Snapshot Replication is a good idea before you start. These steps run one after the other and stop at the first problem:
+nextcloud-start = Start update
+nextcloud-step-backup = Back up the database (mysqldump) and config.php to your home folder
+nextcloud-step-maintenanceOn = Turn on maintenance mode
+nextcloud-step-openPermissions = Give the web server user the files it does not own yet, and note their owners
+nextcloud-step-update = Run Nextcloud's updater (download, check, replace)
+nextcloud-step-upgrade = occ upgrade
+nextcloud-step-repair = Add missing database indices, columns and primary keys
+nextcloud-step-closePermissions = Give the files back to their previous owners
+nextcloud-step-maintenanceOff = Turn off maintenance mode
+nextcloud-finished = Nextcloud is updated and back online.
+nextcloud-step-failed = A step did not finish. Read its output, fix the cause and try again; finished steps are not repeated.
+nextcloud-retry = Try again
+nextcloud-leave = Leave maintenance mode
+nextcloud-none = No Nextcloud found below the web share.
+nextcloud-nas-php = PHP versions on this NAS: { $versions }
+nextcloud-demo = Sample data: the demo updates nothing.
+error-nextcloud-failed = Nextcloud could not be read.

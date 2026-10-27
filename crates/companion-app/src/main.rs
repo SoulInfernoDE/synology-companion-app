@@ -7,6 +7,7 @@ mod commands;
 mod devices;
 mod i18n;
 mod monitor;
+mod nextcloud;
 mod preferences;
 mod recipes;
 mod secrets;
@@ -88,6 +89,10 @@ fn main() {
             recipes::journal,
             recipes::export_journal,
             recipes::boot_task,
+            nextcloud::nextcloud,
+            nextcloud::nextcloud_check,
+            nextcloud::nextcloud_work_folder,
+            nextcloud::nextcloud_step,
             recipes::set_boot_task,
             ssh::ssh_link,
             ssh::ssh_unlink,
