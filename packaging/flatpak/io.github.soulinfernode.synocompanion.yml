@@ -65,13 +65,13 @@ modules:
       - type: file
         dest-filename: syno-companion.deb
         only-arches: [x86_64]
-        url: https://github.com/SoulInfernoDE/synology-companion-app/releases/download/v0.2.0/syno-companion_0.2.0_amd64.deb
-        sha256: a8b03784f5b57e736fb2e7ad690caf789c397de5bceb795cc4a1cfbc72893f0b
+        url: https://github.com/SoulInfernoDE/synology-companion-app/releases/download/v1.0.0/syno-companion_1.0.0_amd64.deb
+        sha256: 60377bbed56247dce9662f630312d5008fa7f547278732f6e7b9831cfda237e0
       - type: file
         dest-filename: syno-companion.deb
         only-arches: [aarch64]
-        url: https://github.com/SoulInfernoDE/synology-companion-app/releases/download/v0.2.0/syno-companion_0.2.0_arm64.deb
-        sha256: 9d5b5cc017b15259239bdf3d72b2e407ebf0b96389445f931a2b37723bd14765
+        url: https://github.com/SoulInfernoDE/synology-companion-app/releases/download/v1.0.0/syno-companion_1.0.0_arm64.deb
+        sha256: 19577a307bb81e6ddfcc7ef731a45f803ef668aaa63ec60692b9d81519c98eed
       - type: file
         path: io.github.soulinfernode.synocompanion.metainfo.xml
     build-commands:
