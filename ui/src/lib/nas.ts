@@ -56,6 +56,21 @@ export interface Drive {
   listed: boolean | null;
 }
 
+export type UpsStatus = 'online' | 'onBattery' | 'lowBattery' | 'off' | 'unknown';
+
+/** Mirrors `companion_dsm::Ups`. */
+export interface Ups {
+  status: UpsStatus;
+  health: Health;
+  manufacturer: string | null;
+  model: string | null;
+  /** Network UPS server when the UPS is attached elsewhere. */
+  server: string | null;
+  chargePercent: number | null;
+  runtimeSeconds: number | null;
+  loadPercent: number | null;
+}
+
 /** Mirrors `companion_dsm::Overview`; `kernel` comes with a later version. */
 export interface Overview {
   model: string;
@@ -77,6 +92,8 @@ export interface Overview {
   networkPorts: NetworkPort[];
   volumes: Volume[];
   drives: Drive[];
+  /** Null when UPS support is off in DSM. */
+  ups: Ups | null;
 }
 
 const TB = 1000 ** 4;
@@ -169,6 +186,16 @@ export const demoOverview: Overview = {
       listed: false,
     },
   ],
+  ups: {
+    status: 'online',
+    health: 'normal',
+    manufacturer: 'APC',
+    model: 'Back-UPS ES 700G',
+    server: null,
+    chargePercent: 100,
+    runtimeSeconds: 28 * 60,
+    loadPercent: 18,
+  },
 };
 
 export const demoUpdates: Updates = {

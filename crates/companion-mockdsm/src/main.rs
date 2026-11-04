@@ -87,6 +87,7 @@ fn api_list() -> Value {
         "SYNO.API.Auth",
         "SYNO.Core.Desktop.SessionData",
         "SYNO.Core.FileServ.SMB",
+        "SYNO.Core.ExternalDevice.UPS",
         "SYNO.Core.Group.Member",
         "SYNO.Core.Hardware.BeepControl",
         "SYNO.Core.Network",
@@ -273,6 +274,11 @@ fn answer(
             { "ifname": "eth0", "status": "connected", "speed": 1000, "max_supported_speed": 2500 },
             { "ifname": "eth1", "status": "disconnected", "speed": -1, "max_supported_speed": 2500 }
         ])),
+        ("SYNO.Core.ExternalDevice.UPS", "get") => success(json!({
+            "enable": true, "mode": "MASTER", "status": "usb_ups_status_online",
+            "manufacture": "APC", "model": "Back-UPS ES 700G", "charge": 100,
+            "runtime": 1680, "net_server_ip": "", "usb_ups_connect": true
+        })),
         ("SYNO.Core.Upgrade.Server", "check") => success(json!({ "update": {
             "available": true, "reboot": "now", "version": "DSM 7.4.1-90080 Update 1" } })),
         ("SYNO.Core.Package", "list") => success(installed_packages()),

@@ -7,6 +7,8 @@
 use serde::Serialize;
 use serde_json::Value;
 
+use crate::ups::Ups;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Health {
@@ -99,10 +101,12 @@ pub struct Overview {
     pub network_ports: Vec<NetworkPort>,
     pub volumes: Vec<Volume>,
     pub drives: Vec<Drive>,
+    /// `None` when UPS support is off in DSM or the account may not read it.
+    pub ups: Option<Ups>,
 }
 
 /// The first of `keys` that holds a number or a numeric string.
-fn number(value: &Value, keys: &[&str]) -> Option<f64> {
+pub(crate) fn number(value: &Value, keys: &[&str]) -> Option<f64> {
     keys.iter().find_map(|key| match &value[*key] {
         Value::Number(number) => number.as_f64(),
         Value::String(text) => text.trim().parse().ok(),
@@ -111,7 +115,7 @@ fn number(value: &Value, keys: &[&str]) -> Option<f64> {
 }
 
 /// The first of `keys` that holds a non-empty string.
-fn text<'a>(value: &'a Value, keys: &[&str]) -> Option<&'a str> {
+pub(crate) fn text<'a>(value: &'a Value, keys: &[&str]) -> Option<&'a str> {
     keys.iter().find_map(|key| {
         value[*key]
             .as_str()
@@ -316,6 +320,7 @@ impl Overview {
         utilization: &Value,
         storage: &Value,
         ethernet: &Value,
+        ups: &Value,
     ) -> Self {
         let cpu = &utilization["cpu"];
         let cpu_percent = ["user_load", "system_load", "other_load"]
@@ -363,6 +368,7 @@ impl Overview {
             network_ports: network_ports(ethernet),
             volumes: volumes(storage),
             drives: drives(storage),
+            ups: Ups::from_api(ups),
         }
     }
 }
@@ -387,6 +393,7 @@ mod tests {
             &fixture("system-info.json"),
             &fixture("utilization.json"),
             &fixture("storage-load-info.json"),
+            &Value::Null,
             &Value::Null,
         );
         assert_eq!(overview.model, "VirtualDSM");
@@ -472,8 +479,9 @@ mod tests {
             { "ifname": "eth0", "status": "connected", "speed": 2500, "max_supported_speed": "2500" },
             { "ifname": "eth1", "status": "disconnected", "speed": -1 }
         ]);
-        let overview = Overview::from_api(&system, &utilization, &storage, &ethernet);
+        let overview = Overview::from_api(&system, &utilization, &storage, &ethernet, &Value::Null);
         assert_eq!(overview.model, "DS923+");
+        assert_eq!(overview.ups, None);
         assert_eq!(overview.dsm, "7.3.1-86003");
         assert_eq!(overview.uptime_seconds, 36_000);
         assert_eq!(overview.cpu_percent, 12.0);

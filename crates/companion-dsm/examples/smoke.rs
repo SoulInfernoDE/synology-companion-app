@@ -77,6 +77,7 @@ async fn main() {
         overview.drives.len(),
         overview.network_ports.len()
     );
+    println!("ups: {:?}", overview.ups);
     println!("identity: {:?}", client.identity(&session).await);
     println!("updates: {:?}", client.updates(&session).await);
     println!("shares: {:?}", client.shares(&session).await);

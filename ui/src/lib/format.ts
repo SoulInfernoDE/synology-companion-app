@@ -49,3 +49,18 @@ export function duration(seconds: number): string {
   const parts = days > 0 ? [format(days, 'day'), format(hours, 'hour')] : [format(hours, 'hour')];
   return new Intl.ListFormat(currentLocale(), { style: 'narrow', type: 'unit' }).format(parts);
 }
+
+/** Hours and minutes, e.g. "1 hr, 5 min"; for battery runtimes. */
+export function minutes(seconds: number): string {
+  const total = Math.round(seconds / 60);
+  const format = (value: number, unit: 'hour' | 'minute') =>
+    new Intl.NumberFormat(currentLocale(), { style: 'unit', unit, unitDisplay: 'short' }).format(
+      value,
+    );
+  const hours = Math.floor(total / 60);
+  const parts =
+    hours > 0
+      ? [format(hours, 'hour'), ...(total % 60 > 0 ? [format(total % 60, 'minute')] : [])]
+      : [format(total, 'minute')];
+  return new Intl.ListFormat(currentLocale(), { style: 'narrow', type: 'unit' }).format(parts);
+}

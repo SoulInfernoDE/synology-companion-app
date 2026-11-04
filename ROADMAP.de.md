@@ -65,6 +65,10 @@ Jede Version ist für sich nutzbar. Funktionen, die das NAS über DSMs eigene Ei
 - [ ] Signierte Pakete veröffentlichen, auf Flathub und im AUR (braucht Zertifikate und Konten des Maintainers)
 - [x] Download Station: Aufgaben mit Fortschritt anzeigen, Links hinzufügen (HTTP, HTTPS, FTP, Magnet), anhalten, fortsetzen, entfernen
 
+## v1.1 – Übersicht
+
+- [x] USV: Status, Ladung, Restlaufzeit im Akkubetrieb und Last, für eine USV an USB, über einen Netzwerk-USV-Server oder per SNMP
+
 ## v2.0 – Web Station
 
 - [ ] Web-Station-Profile: PHP-Werte und -Module (zum Beispiel `redis`), die DSM-Updates überstehen

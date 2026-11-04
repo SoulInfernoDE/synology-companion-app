@@ -1,8 +1,27 @@
 <script lang="ts">
-  /** A usage bar that turns to warning and danger colors as it fills. */
-  let { value, label }: { value: number; label: string } = $props();
+  /**
+   * A usage bar that turns to warning and danger colors as it fills; a `charge` bar
+   * (battery) turns to them as it empties.
+   */
+  let {
+    value,
+    label,
+    charge = false,
+  }: { value: number; label: string; charge?: boolean } = $props();
 
-  const level = $derived(value >= 90 ? 'danger' : value >= 75 ? 'warning' : 'normal');
+  const level = $derived(
+    charge
+      ? value <= 20
+        ? 'danger'
+        : value <= 50
+          ? 'warning'
+          : 'normal'
+      : value >= 90
+        ? 'danger'
+        : value >= 75
+          ? 'warning'
+          : 'normal',
+  );
 </script>
 
 <div

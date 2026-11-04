@@ -1,6 +1,8 @@
 <script lang="ts">
   import ArrowDown from '@lucide/svelte/icons/arrow-down';
   import ArrowUp from '@lucide/svelte/icons/arrow-up';
+  import BatteryCharging from '@lucide/svelte/icons/battery-charging';
+  import BatteryWarning from '@lucide/svelte/icons/battery-warning';
   import Cpu from '@lucide/svelte/icons/cpu';
   import Database from '@lucide/svelte/icons/database';
   import FlaskConical from '@lucide/svelte/icons/flask-conical';
@@ -11,7 +13,7 @@
   import Thermometer from '@lucide/svelte/icons/thermometer';
   import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
   import Meter from './Meter.svelte';
-  import { bytes, celsius, duration, percent, rate } from '../lib/format';
+  import { bytes, celsius, duration, minutes, percent, rate } from '../lib/format';
   import { t } from '../lib/i18n.svelte';
   import type { Snippet } from 'svelte';
   import type { Updates } from '../lib/backend';
@@ -47,7 +49,11 @@
   };
 
   const overall = $derived<Health>(
-    [...overview.volumes, ...overview.drives].reduce<Health>(
+    [
+      ...overview.volumes,
+      ...overview.drives,
+      ...(overview.ups ? [overview.ups] : []),
+    ].reduce<Health>(
       (worst, { health }) =>
         health === 'critical' || worst === 'critical'
           ? 'critical'
@@ -152,6 +158,43 @@
       <article class="card tile">
         <h2><Thermometer size={16} aria-hidden="true" /> {t('overview-temperature')}</h2>
         <p class="value">{celsius(overview.temperatureC)}</p>
+      </article>
+    {/if}
+    {#if overview.ups}
+      {@const ups = overview.ups}
+      <article class="card tile">
+        <h2>
+          {#if ups.status === 'online'}
+            <BatteryCharging size={16} aria-hidden="true" />
+          {:else}
+            <BatteryWarning size={16} aria-hidden="true" />
+          {/if}
+          {t('overview-ups')}
+          <span class="badge {badgeClass[ups.health]}"
+            >{t(`overview-ups-status-${ups.status}`)}</span
+          >
+        </h2>
+        {#if ups.chargePercent !== null}
+          <p class="value">
+            {percent(ups.chargePercent)}
+            <span class="subtle">{t('overview-ups-charged')}</span>
+          </p>
+          <Meter value={ups.chargePercent} label={t('overview-ups')} charge />
+        {/if}
+        <p class="detail subtle">
+          {[
+            ups.runtimeSeconds !== null
+              ? t('overview-ups-runtime', { duration: minutes(ups.runtimeSeconds) })
+              : null,
+            ups.loadPercent !== null
+              ? t('overview-ups-load', { load: percent(ups.loadPercent) })
+              : null,
+            [ups.manufacturer, ups.model].filter(Boolean).join(' ') || null,
+            ups.server ? t('overview-ups-server', { server: ups.server }) : null,
+          ]
+            .filter(Boolean)
+            .join(' · ')}
+        </p>
       </article>
     {/if}
   </section>
@@ -333,9 +376,18 @@
     gap: 14px;
   }
 
-  /* Without a temperature sensor there are three tiles. */
+  /* Three tiles without a temperature sensor, five with a UPS as well. */
   .tiles:has(> :nth-child(3):last-child) {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .tiles:has(> :nth-child(5)) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  /* The UPS fills the second row beside the temperature. */
+  .tiles > :nth-child(5) {
+    grid-column: span 2;
   }
 
   .tile {
@@ -346,6 +398,10 @@
 
   .tile h2 {
     margin-bottom: 0;
+  }
+
+  .tile h2 .badge {
+    margin-left: auto;
   }
 
   .value {
@@ -459,7 +515,8 @@
   }
 
   @media (max-width: 1040px) {
-    .tiles {
+    .tiles,
+    .tiles:has(> :nth-child(5)) {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }

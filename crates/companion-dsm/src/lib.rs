@@ -11,6 +11,7 @@ mod overview;
 mod packages;
 mod setup;
 pub mod tls;
+mod ups;
 
 use std::collections::HashMap;
 use std::time::Duration;
@@ -27,6 +28,7 @@ pub use setup::{
     PasswordRules, SetupDone, SetupInfo, SetupRequest, SetupState, TimeZone, UpdatePolicy,
 };
 use tls::Verdict;
+pub use ups::{Ups, UpsStatus};
 
 /// Session name sent to DSM; it shows up in DSM's list of signed-in connections.
 const SESSION_NAME: &str = "SynoCompanion";
@@ -34,6 +36,7 @@ const SESSION_NAME: &str = "SynoCompanion";
 /// APIs this client uses, looked up once per sign-in.
 const APIS: &[&str] = &[
     "SYNO.API.Auth",
+    "SYNO.Core.ExternalDevice.UPS",
     "SYNO.Core.FileServ.SMB",
     "SYNO.Core.Hardware.BeepControl",
     "SYNO.Core.Network",
@@ -402,7 +405,11 @@ impl Client {
             .call(session, "SYNO.Core.Network.Ethernet", "list", 2, &[])
             .await
             .unwrap_or(Value::Null);
-        let overview = Overview::from_api(&system, &utilization, &storage, &ethernet);
+        let ups = self
+            .call(session, "SYNO.Core.ExternalDevice.UPS", "get", 1, &[])
+            .await
+            .unwrap_or(Value::Null);
+        let overview = Overview::from_api(&system, &utilization, &storage, &ethernet, &ups);
         // Development builds show the port fields when no speed was recognised, to
         // check the field names against a real DSM. Field names only, no values.
         #[cfg(debug_assertions)]

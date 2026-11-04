@@ -65,6 +65,10 @@ Each version is usable on its own. Features that change the NAS beyond DSM's own
 - [ ] Publish signed packages, on Flathub and in the AUR (needs certificates and accounts of the maintainer)
 - [x] Download Station: list tasks with progress, add links (HTTP, HTTPS, FTP, magnet), pause, resume, remove
 
+## v1.1 – Overview
+
+- [x] UPS: status, charge, runtime on battery and load, for a UPS on USB, through a network UPS server or over SNMP
+
 ## v2.0 – Web Station
 
 - [ ] Web Station profiles: PHP values and modules (for example `redis`) that survive DSM updates
